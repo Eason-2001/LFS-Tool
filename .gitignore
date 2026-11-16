@@ -1,0 +1,41 @@
+# ========== Python 虚拟环境（你根目录的.venv） ==========
+.venv/
+venv/
+env/
+
+# ========== Python 缓存文件（所有目录下的__pycache__） ==========
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ========== IDE 个人配置 ==========
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# ========== Django 后端本地文件 ==========
+# 本地数据库：每个人自己跑迁移生成，不传
+db.sqlite3
+db.sqlite3-journal
+# 用户上传的文件目录
+media/
+# 日志文件
+*.log
+
+# ========== 前端 Vite 项目垃圾文件 ==========
+frontend/node_modules/
+frontend/dist/
+frontend/.vscode/
+# Vite本地配置
+frontend/.env.local
+frontend/.env.*.local
+
+# ========== 本地敏感配置（存密钥/数据库密码的） ==========
+.env
+.env.local
+config/settings_local.py
+
+# ========== 系统垃圾文件 ==========
+.DS_Store
+Thumbs.db
