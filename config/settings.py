@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -134,4 +135,8 @@ CORS_ALLOW_ALL_ORIGINS = True
 import os
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "outputs")
+# 跨域配置：允许本地前端开发地址访问
+CORS_ALLOW_ALL_ORIGINS = True  # 开发阶段全开，上线了再改
+CORS_ALLOW_CREDENTIALS = True
+
 

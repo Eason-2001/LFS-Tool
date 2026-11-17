@@ -39,7 +39,10 @@ config/settings_local.py
 # ========== 系统垃圾文件 ==========
 .DS_Store
 Thumbs.db
-# 程序运行时的临时文件，不传到仓库
-tmp_uploads/
-outputs/
+# 忽略文件夹里所有临时文件
+tmp_uploads/*
+outputs/*
+# 但是不忽略占位文件，保留文件夹结构
+!tmp_uploads/.gitkeep
+!outputs/.gitkeep
 
