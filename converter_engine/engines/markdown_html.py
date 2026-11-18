@@ -9,6 +9,9 @@ from .registry import register_converter
 
 @register_converter
 class MarkdownToHtmlConverter(BaseConverter):
+    # 标记属于文档类
+    category = "document"
+    category_name = "文档格式转换"
     @staticmethod
     def supports():
         # 声明支持哪些转换配对，会自动注册进注册表

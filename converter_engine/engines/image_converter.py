@@ -9,6 +9,9 @@ from PIL import Image
 
 @register_converter
 class ImageConverter(BaseConverter):
+    # 标记这个转换器属于图片类
+    category = "image"
+    category_name = "图片格式转换"
     @staticmethod
     def supports():
         # 声明支持哪些转换配对，会自动注册进注册表

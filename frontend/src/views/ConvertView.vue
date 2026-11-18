@@ -17,10 +17,13 @@
         <!-- 格式选择下拉框 -->
         <select v-model="targetFormat" class="format-select">
           <option value="">请选择目标转换格式</option>
-          <option v-for="item in formatList" :value="item.target">
-            {{ item.label }}
+          <!-- 遍历所有分类分组 -->
+          <optgroup v-for="(group, catKey) in formatList" :key="catKey" :label="group.name">
+          <option v-for="item in group.items" :value="item.target">
+          {{ item.label }}
           </option>
-        </select>
+        </optgroup>
+          </select>
 
         <!-- 转换按钮 -->
         <button

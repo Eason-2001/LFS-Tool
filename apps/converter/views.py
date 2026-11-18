@@ -9,6 +9,8 @@ import uuid
 from django.conf import settings
 from rest_framework.parsers import MultiPartParser  # 处理文件上传必须的工具
 from .serializers import FileConvertSerializer
+from django.http import FileResponse
+
 
 
 class SupportedFormatView(APIView):
@@ -16,18 +18,9 @@ class SupportedFormatView(APIView):
     GET 接口：返回网站当前支持的所有文件转换格式
     前端打开页面的时候，拉这个接口，自动渲染下拉选项
     """
+
     def get(self, request):
-        # 拿到注册表里所有的 (源格式, 目标格式) 列表
-        supported_list = registry.supported()
-        # 格式化成前端好读的结构
-        data = [
-            {
-                "source": src,
-                "target": dst,
-                "label": f"{src.upper()} 转 {dst.upper()}"
-            }
-            for src, dst in supported_list
-        ]
+        data = registry.grouped_supported()
         return Response({
             "code": 200,
             "message": "success",
@@ -85,7 +78,7 @@ class FileConvertView(APIView):
         converter.convert(temp_input_path, output_path)
 
         # 6. 把下载链接拼好，返回给前端
-        download_url = f"/media/{output_filename}"
+        download_url = f"/api/converter/download/{output_filename}"
         return Response({
             "code": 200,
             "message": "转换成功",
@@ -94,3 +87,25 @@ class FileConvertView(APIView):
                 "original_name": original_filename
             }
         }, status=status.HTTP_200_OK)
+
+
+class FileDownloadView(APIView):
+    """专门处理文件下载，强制浏览器触发下载而不是预览"""
+
+    def get(self, request, filename):
+        # 拼接outputs目录下的文件路径
+        file_path = os.path.join(settings.MEDIA_ROOT, filename)
+
+        # 先判断文件存不存在
+        if not os.path.exists(file_path):
+            return Response(
+                {"code": 404, "message": "文件不存在或已过期"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        # 读取文件返回
+        response = FileResponse(open(file_path, "rb"))
+        # 关键响应头：attachment = 作为附件下载，filename = 下载下来的文件名
+        response["Content-Disposition"] = f'attachment; filename="{filename}"'
+        return response
+
