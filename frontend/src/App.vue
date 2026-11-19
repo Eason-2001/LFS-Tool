@@ -24,7 +24,7 @@ body {
   position: fixed;
   inset: 0; /* 上下左右全贴边，铺满全屏 */
   z-index: -1; /* 压在所有页面内容下面 */
-  background-image: url('/bg.jpg'); /* 换成你自己的图片名 */
+  background-image: url('/bg.webp');
   background-size: cover;
   background-position: center;
 
