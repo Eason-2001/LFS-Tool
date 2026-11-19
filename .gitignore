@@ -24,6 +24,8 @@ media/
 *.log
 
 # ========== 前端 Vite 项目垃圾文件 ==========
+# 通用：所有目录下的 node_modules 都不进仓库
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.vscode/
