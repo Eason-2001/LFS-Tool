@@ -113,7 +113,7 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
 // 页面刚加载的时候，就去后端拉支持的格式列表
 onMounted(async () => {
-  const res = await fetch('http://127.0.0.1:8000/api/converter/supported/')
+  const res = await fetch('/api/converter/supported/')
   const data = await res.json()
   // 直接拿当前分类下的格式选项列表，不再保留分组结构
   currentItems.value = data.data[currentCategory]?.items || []
@@ -125,13 +125,13 @@ const handleConvert = async () => {
   formData.append('file', selectedFile.value)
   formData.append('target_format', targetFormat.value)
 
-  const res = await fetch('http://127.0.0.1:8000/api/converter/convert/', {
+  const res = await fetch('/api/converter/convert/', {
     method: 'POST',
     body: formData
   })
   const result = await res.json()
   if (result.code === 200) {
-    downloadUrl.value = 'http://127.0.0.1:8000' + result.data.download_url
+    downloadUrl.value = result.data.download_url
   } else {
     alert(result.message)
   }

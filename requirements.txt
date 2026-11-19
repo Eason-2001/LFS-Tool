@@ -1,11 +1,12 @@
+# Web 框架与接口
 Django>=5.1,<6.0
+djangorestframework>=3.15
+django-cors-headers>=4.3
+gunicorn>=23.0
+
+# 文档/文本转换
 python-docx>=1.1.0
 pdf2docx>=0.5.8
+pymupdf>=2.1.0
 markdown>=3.6
 Pillow>=10.0.0
-pywin32>=306; sys_platform == "win32"
-djangorestframework>=3.15
-django-cors-headers>=4.3
-djangorestframework>=3.15
-django-cors-headers>=4.3
-

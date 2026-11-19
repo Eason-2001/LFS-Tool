@@ -50,3 +50,7 @@ outputs/*
 _test_io/
 _analyze/
 
+# ========== Docker 运行时持久化数据（容器卷挂载，不进仓库） ==========
+data/
+static/
+

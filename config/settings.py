@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -19,13 +20,22 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tg%iry6knl#26-rjcvdb#7drjdqno(+o=yx^8&0oo!00ce@e^7'
+# 密钥与调试开关走环境变量：生产不暴露默认密钥，DEBUG 默认关闭
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-tg%iry6knl#26-rjcvdb#7drjdqno(+o=yx^8&0oo!00ce@e^7",
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.environ.get("DJANGO_DEBUG", "0") == "1"
 
-ALLOWED_HOSTS = []
+# 允许访问的主机，逗号分隔；默认带本机回环和服务器公网 IP
+ALLOWED_HOSTS = [
+    h.strip()
+    for h in os.environ.get(
+        "DJANGO_ALLOWED_HOSTS", "127.0.0.1,localhost,47.109.110.119"
+    ).split(",")
+    if h.strip()
+]
 
 
 # Application definition
@@ -110,9 +120,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "zh-hans"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Asia/Shanghai"
 
 USE_I18N = True
 
@@ -120,23 +130,23 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/ref/settings/
 
-STATIC_URL = 'static/'
+STATIC_URL = "static/"
+# 生产环境 collectstatic 收集后端静态文件到此目录，供 Nginx/gunicorn 分发
+STATIC_ROOT = BASE_DIR / "static"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-CORS_ALLOW_ALL_ORIGINS = True
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # 文件上传配置
-import os
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "outputs")
-# 跨域配置：允许本地前端开发地址访问
-CORS_ALLOW_ALL_ORIGINS = True  # 开发阶段全开，上线了再改
+
+# 跨域：前后端经 Nginx 同域反代后本不依赖 CORS，这里保留全开以便本地直连调试
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 

@@ -1,0 +1,32 @@
+# LFS-Tool 本地/服务器统一编排：后端 Django + 前端 Nginx
+# 换服务器时：装好 Docker 和 compose，把本目录代码拷过去，执行 `docker compose up -d --build` 即可
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: lfs-backend
+    environment:
+      - DJANGO_DEBUG=0
+      # 以后绑域名，把域名追加到这里，逗号分隔
+      - DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,47.109.110.119
+    volumes:
+      # 转换产物、临时上传、数据库挂到宿主机 data 目录，容器重建不丢数据
+      - ./data/outputs:/app/outputs
+      - ./data/tmp_uploads:/app/tmp_uploads
+      - ./data/db.sqlite3:/app/db.sqlite3
+    restart: unless-stopped
+    # 不对外暴露 8000，只在内部网络给前端 Nginx 访问；排查问题时可临时加 ports: ["8000:8000"]
+    expose:
+      - "8000"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: lfs-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

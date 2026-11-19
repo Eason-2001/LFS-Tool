@@ -1,0 +1,40 @@
+# 后端镜像：Django + gunicorn + LibreOffice headless + 中文字体
+# 负责文件格式转换，DOCX→PDF 依赖容器内的 soffice
+FROM python:3.14-slim-bookworm
+
+# 不写 pyc、日志不缓冲，方便容器内排查
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# 系统依赖：
+#   libreoffice-writer  提供 soffice，用于 DOCX→PDF（只装 Writer，比全量 LibreOffice 省体积）
+#   fonts-noto-cjk      中文字体，避免转出文档/渲染 PDF 时中文乱码
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        libreoffice-writer \
+        fonts-noto-cjk \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# 先拷依赖清单单独装，利用 Docker 层缓存：代码改动不会重装 Python 依赖
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 拷贝后端代码（前端、node_modules、产物不进后端镜像）
+COPY apps ./apps
+COPY config ./config
+COPY converter_engine ./converter_engine
+COPY manage.py ./
+
+# 生产环境收集后端静态文件（admin 页面等）
+RUN python manage.py collectstatic --noinput
+
+# 转换产物目录与临时上传目录（outputs 在 compose 里挂卷持久化）
+RUN mkdir -p outputs tmp_uploads
+
+EXPOSE 8000
+
+# 启动：先自动建表（migrate 幂等，重复执行无害），再用 gunicorn 对外服务
+# 2G 内存下 workers 保守设 2；超时放宽到 120s，给 LibreOffice 转换留时间
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --timeout 120"]
