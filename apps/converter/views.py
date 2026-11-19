@@ -75,10 +75,23 @@ class FileConvertView(APIView):
 
         # 5. 调用转换器干活
         converter = converter_cls()  # 注意：find拿回来的是类，要先实例化！
-        converter.convert(temp_input_path, output_path)
+        try:
+            converter.convert(temp_input_path, output_path)
+        except Exception as e:
+            # 转换失败：清理已落盘的临时输入文件，返回明确错误信息，避免直接 500
+            if os.path.exists(temp_input_path):
+                os.remove(temp_input_path)
+            return Response(
+                {"code": 500, "message": f"转换失败：{str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
-        # 6. 把下载链接拼好，返回给前端
-        download_url = f"/api/converter/download/{output_filename}"
+        # 清理临时输入文件，只保留转换结果
+        if os.path.exists(temp_input_path):
+            os.remove(temp_input_path)
+
+        # 6. 把下载链接拼好，返回给前端（路由带尾斜杠，这里保持一致，避免 301）
+        download_url = f"/api/converter/download/{output_filename}/"
         return Response({
             "code": 200,
             "message": "转换成功",

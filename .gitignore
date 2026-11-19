@@ -46,3 +46,7 @@ outputs/*
 !tmp_uploads/.gitkeep
 !outputs/.gitkeep
 
+# ========== 本地临时测试产物 ==========
+_test_io/
+_analyze/
+

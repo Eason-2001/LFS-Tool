@@ -8,7 +8,7 @@
       <router-link to="/convert" class="tool-card">
         <div class="card-icon">🎨</div>
         <h3>文件格式转换</h3>
-        <p>图片互转、Markdown转HTML，一键搞定</p>
+        <p>图片、文档、音频格式一键互转</p>
       </router-link>
 
       <!-- 占位卡片，以后加新功能直接照着复制就行 -->
@@ -55,7 +55,10 @@
   gap: 24px;
 }
 .tool-card {
-  background: white;
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 16px;
   padding: 32px 24px;
   text-decoration: none;
@@ -67,6 +70,7 @@
 .tool-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.92);
 }
 .tool-card.disabled {
   opacity: 0.5;

@@ -7,3 +7,5 @@ from .registry import registry
 # 导入转换器文件，触发装饰器自动注册
 from . import markdown_html
 from . import image_converter
+from . import doc_text_converter
+from . import docx_pdf_converter
