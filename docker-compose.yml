@@ -16,6 +16,9 @@ services:
     restart: unless-stopped
     expose:
       - "3306"
+    # 直连方案：把 3306 发布到宿主机。安全组务必只放行自己电脑的公网 IP，勿开 0.0.0.0/0
+    ports:
+      - "3306:3306"
     # 健康检查：后端要等 MySQL 真正就绪后再启动，避免首次 migrate 抢跑连不上库
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
