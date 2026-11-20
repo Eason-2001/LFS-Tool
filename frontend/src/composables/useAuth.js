@@ -6,11 +6,19 @@ const ACCESS_KEY = 'lfs_access'
 const REFRESH_KEY = 'lfs_refresh'
 const USER_KEY = 'lfs_user'
 
-const state = reactive({
-  access: localStorage.getItem(ACCESS_KEY),
-  refresh: localStorage.getItem(REFRESH_KEY),
-  user: JSON.parse(localStorage.getItem(USER_KEY) || 'null'),
-})
+function readStorage() {
+  const access = localStorage.getItem(ACCESS_KEY)
+  const refresh = localStorage.getItem(REFRESH_KEY)
+  let user = JSON.parse(localStorage.getItem(USER_KEY) || 'null')
+  // 没有任何令牌时，用户信息属于历史残留，一并清掉，避免未登录还显示账号
+  if (!access && !refresh) {
+    user = null
+    localStorage.removeItem(USER_KEY)
+  }
+  return { access, refresh, user }
+}
+
+const state = reactive(readStorage())
 
 /** 解码 access 令牌里的过期时间 exp（仅做前端体验判断，安全仍以后端校验为准） */
 function getTokenExp(token) {
@@ -24,18 +32,14 @@ function getTokenExp(token) {
   }
 }
 
-// 是否已登录：access 未过期即登录；access 过期但 refresh 仍有效，视为可续期的登录态
-// （真正发请求时由 request 层静默换新；refresh 也过期才彻底退出）
+// 是否已登录：access 未过期即登录；access 无效时看 refresh 是否仍有效
+// 令牌解不出过期时间（格式损坏/缺失）不凭字符串兜底，按未登录处理，后端 401 再兜底
 const isLogin = computed(() => {
+  const now = Date.now()
   const accessExp = state.access ? getTokenExp(state.access) : null
-  if (accessExp == null || accessExp > Date.now()) {
-    // access 有效，或解不出 exp 时不轻易判死（交后端兜底）
-    if (accessExp == null) return !!state.access
-    return true
-  }
-  // access 已过期：看 refresh 是否还在有效期内
+  if (accessExp != null && accessExp > now) return true
   const refreshExp = state.refresh ? getTokenExp(state.refresh) : null
-  return refreshExp != null && refreshExp > Date.now()
+  return refreshExp != null && refreshExp > now
 })
 
 // 登录成功后保存令牌和用户信息

@@ -11,9 +11,25 @@
 </template>
 
 <script setup>
+import { onMounted } from 'vue'
 import AppHeader from './components/AppHeader.vue'
 import Toast from './components/Toast.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
+import { useAuth } from './composables/useAuth'
+import { request } from './api/request'
+
+const { isLogin, setUser, logout } = useAuth()
+
+// 启动时向后端确认本地登录态仍有效；令牌失效则清掉残留，并同步最新用户资料
+onMounted(async () => {
+  if (!isLogin.value) return
+  const { ok, data } = await request('/api/accounts/profile/')
+  if (ok && data.code === 200) {
+    setUser(data.data)
+  } else {
+    logout()
+  }
+})
 </script>
 
 <style>
