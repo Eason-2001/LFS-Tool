@@ -1,6 +1,28 @@
-# LFS-Tool 本地/服务器统一编排：后端 Django + 前端 Nginx
+# LFS-Tool 编排：后端 Django + 前端 Nginx + MySQL
 # 换服务器时：装好 Docker 和 compose，把本目录代码拷过去，执行 `docker compose up -d --build` 即可
 services:
+  db:
+    image: mysql:8.0
+    container_name: lfs-mysql
+    environment:
+      MYSQL_DATABASE: lfs_tool
+      MYSQL_USER: lfs
+      MYSQL_PASSWORD: lfs123456
+      MYSQL_ROOT_PASSWORD: root123456
+      TZ: Asia/Shanghai
+    volumes:
+      # MySQL 数据文件挂到宿主机 data/mysql，容器重建/换机器不丢数据
+      - ./data/mysql:/var/lib/mysql
+    restart: unless-stopped
+    expose:
+      - "3306"
+    # 健康检查：后端要等 MySQL 真正就绪后再启动，避免首次 migrate 抢跑连不上库
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   backend:
     build:
       context: .
@@ -10,11 +32,19 @@ services:
       - DJANGO_DEBUG=0
       # 以后绑域名，把域名追加到这里，逗号分隔
       - DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,47.109.110.119
+      # 数据库连接：主机名 db 是 compose 内部网络里 MySQL 服务的别名
+      - DB_HOST=db
+      - DB_NAME=lfs_tool
+      - DB_USER=lfs
+      - DB_PASSWORD=lfs123456
+      - DB_PORT=3306
     volumes:
-      # 转换产物、临时上传、数据库挂到宿主机 data 目录，容器重建不丢数据
+      # 转换产物、临时上传挂到宿主机 data 目录；数据库由 MySQL 容器的卷负责
       - ./data/outputs:/app/outputs
       - ./data/tmp_uploads:/app/tmp_uploads
-      - ./data/db.sqlite3:/app/db.sqlite3
+    depends_on:
+      db:
+        condition: service_healthy
     restart: unless-stopped
     # 不对外暴露 8000，只在内部网络给前端 Nginx 访问；排查问题时可临时加 ports: ["8000:8000"]
     expose:

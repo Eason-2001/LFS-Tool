@@ -3,9 +3,14 @@
   <div class="bg-layer"></div>
   <!-- 页面内容出口 -->
   <router-view />
+  <!-- 全局轻提示 + 确认弹窗 -->
+  <Toast />
+  <ConfirmDialog />
 </template>
 
 <script setup>
+import Toast from './components/Toast.vue'
+import ConfirmDialog from './components/ConfirmDialog.vue'
 </script>
 
 <style>

@@ -27,8 +27,8 @@
     </div>
 
     <!-- 返回首页入口 -->
-    <router-link to="/" class="back-link">
-      🔙 返回首页
+    <router-link to="/" class="back-btn">
+      🏠 返回主页
     </router-link>
 
   </div>
@@ -104,24 +104,21 @@
   line-height: 1.5;
 }
 
-.back-link {
+.back-btn {
   display: block;
   width: fit-content;
-  margin: 40px auto 0;
-  padding: 10px 24px;
+  margin: 18px auto 0;
+  padding: 10px 22px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  color: #ffffff;
+  background: #f5f7f6;
+  border: 1px solid #e4e7e6;
+  color: #666;
   text-decoration: none;
-  font-size: 15px;
-  transition: all 0.2s ease;
+  font-size: 14px;
 }
 
-/* 悬停微动效 */
-.back-link:hover {
-  background: rgba(255, 255, 255, 0.25);
-  transform: translateY(-2px);
+.back-btn:hover {
+  background: linear-gradient(135deg, #eef1fe 0%, #f3eefc 100%);
 }
 
 

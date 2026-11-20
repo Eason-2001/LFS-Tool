@@ -1,9 +1,14 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
-// 新增：二级分类页
+// 二级分类页
 import ConvertCategoryView from '../views/ConvertCategoryView.vue'
-// 现有转换页（以后按图片/文档拆，先复用这一个）
+// 现有转换页（图片/文档复用）
 import ConvertView from '../views/ConvertView.vue'
+// 登录 / 注册 / 备忘录
+import LoginView from '../views/LoginView.vue'
+import RegisterView from '../views/RegisterView.vue'
+import MemoView from '../views/MemoView.vue'
+import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -30,8 +35,33 @@ const router = createRouter({
       path: '/convert/document',
       name: 'convert-document',
       component: ConvertView
+    },
+    {
+      path: '/login',
+      name: 'login',
+      component: LoginView
+    },
+    {
+      path: '/register',
+      name: 'register',
+      component: RegisterView
+    },
+    // 备忘录：需要登录才能访问
+    {
+      path: '/memo',
+      name: 'memo',
+      component: MemoView,
+      meta: { requiresAuth: true }
     }
   ]
+})
+
+// 路由守卫：访问需要登录的页面时，未登录跳登录页，并记下原本要去的地址
+router.beforeEach((to) => {
+  const { isLogin } = useAuth()
+  if (to.meta.requiresAuth && !isLogin.value) {
+    return { name: 'login', query: { redirect: to.fullPath } }
+  }
 })
 
 export default router

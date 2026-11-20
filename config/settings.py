@@ -87,13 +87,17 @@ TEMPLATES = [
 WSGI_APPLICATION = 'config.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database：本地和线上统一用 MySQL，不再回退 SQLite。
+# 本地默认连 127.0.0.1:3306；线上由 docker-compose 注入 DB_HOST=db 等环境变量覆盖。
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+    "default": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": os.environ.get("DB_NAME", "lfs_tool"),
+        "USER": os.environ.get("DB_USER", "lfs"),
+        "PASSWORD": os.environ.get("DB_PASSWORD", "lfs123456"),
+        "HOST": os.environ.get("DB_HOST", "127.0.0.1"),
+        "PORT": os.environ.get("DB_PORT", "3306"),
+        "OPTIONS": {"charset": "utf8mb4"},
     }
 }
 
@@ -148,5 +152,13 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "outputs")
 # 跨域：前后端经 Nginx 同域反代后本不依赖 CORS，这里保留全开以便本地直连调试
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+
+# DRF 鉴权：默认用 JWT 解析请求头里的令牌；
+# 这里不设全局默认权限，公开接口（格式转换）不强制登录，受保护接口在视图里单独加 IsAuthenticated
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+}
 
 

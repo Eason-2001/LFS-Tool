@@ -66,6 +66,9 @@
 <script setup>
 import {ref, computed, onMounted, onBeforeUnmount} from 'vue'
 import {useRoute} from 'vue-router'
+import { useToast } from '../composables/useToast'
+
+const { toast } = useToast()
 
 
 // 响应式变量
@@ -133,7 +136,7 @@ const handleConvert = async () => {
   if (result.code === 200) {
     downloadUrl.value = result.data.download_url
   } else {
-    alert(result.message)
+    toast(result.message, 'error')
   }
 }
 </script>
@@ -344,21 +347,18 @@ const handleConvert = async () => {
 .back-btn {
   display: block;
   width: fit-content;
-  margin: 24px auto 0;
+  margin: 18px auto 0;
   padding: 10px 22px;
   border-radius: 999px;
   background: #f5f7f6;
   border: 1px solid #e4e7e6;
-  color: #666666;
+  color: #666;
   text-decoration: none;
   font-size: 14px;
-  transition: all 0.2s ease;
 }
 
 .back-btn:hover {
   background: linear-gradient(135deg, #eef1fe 0%, #f3eefc 100%);
-  color: #5b7cfa;
-  transform: translateY(-2px);
 }
 
 
