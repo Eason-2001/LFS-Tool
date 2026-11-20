@@ -6,7 +6,7 @@
       <div class="header-right">
         <!-- 已登录：头像 + 下拉菜单 -->
         <div v-if="isLogin" class="avatar-wrap" @click="toggleMenu">
-          <img :src="avatarUrl" class="avatar" alt="用户头像" />
+          <img :src="displayedAvatar" class="avatar" alt="用户头像" @error="onImgError" />
           <div v-show="menuOpen" class="dropdown" @click.stop>
             <div class="dropdown-user">
               <span class="drop-nick">{{ displayName }}</span>
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
@@ -37,9 +37,16 @@ const { state, isLogin, logout } = useAuth()
 
 const defaultAvatar = '/default-avatar.svg'
 const menuOpen = ref(false)
+const imgError = ref(false)
 
 const avatarUrl = computed(() => state.user?.avatar || defaultAvatar)
+const displayedAvatar = computed(() => (imgError.value ? defaultAvatar : avatarUrl.value))
 const displayName = computed(() => state.user?.nickname || state.user?.username || '未登录')
+
+// 切换账号后重置头像加载失败标记
+watch(() => state.user?.avatar, () => { imgError.value = false })
+
+const onImgError = () => { imgError.value = true }
 
 const toggleMenu = () => {
   menuOpen.value = !menuOpen.value

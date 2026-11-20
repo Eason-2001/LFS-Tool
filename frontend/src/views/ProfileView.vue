@@ -6,7 +6,7 @@
       <!-- 头像区：点击上传新头像 -->
       <div class="avatar-section">
         <div class="avatar-big" @click="onPickAvatar">
-          <img :src="avatarUrl" alt="头像" />
+          <img :src="avatarUrl" alt="头像" @error="onAvatarError" />
           <span class="avatar-mask">{{ uploading ? '上传中…' : '更换头像' }}</span>
         </div>
         <input ref="fileInput" type="file" accept="image/*" hidden @change="onAvatarChange" />
@@ -43,9 +43,10 @@ import { useToast } from '../composables/useToast'
 const { state, setUser } = useAuth()
 const { toast } = useToast()
 
+const DEFAULT_AVATAR = '/default-avatar.svg'
 const username = ref('')
 const nickname = ref('')
-const avatarUrl = ref('/default-avatar.svg')
+const avatarUrl = ref(DEFAULT_AVATAR)
 const savingNick = ref(false)
 const uploading = ref(false)
 const fileInput = ref(null)
@@ -57,11 +58,16 @@ const loadProfile = async () => {
     const p = data.data
     username.value = p.username
     nickname.value = p.nickname || ''
-    avatarUrl.value = p.avatar || '/default-avatar.svg'
+    avatarUrl.value = p.avatar || DEFAULT_AVATAR
     setUser(p) // 同步到本地登录态
   } else {
     toast(data.message || '资料加载失败', 'error')
   }
+}
+
+// 头像加载失败（文件 404 等）时回退默认头像，避免露出裂图 alt 文字
+const onAvatarError = () => {
+  if (avatarUrl.value !== DEFAULT_AVATAR) avatarUrl.value = DEFAULT_AVATAR
 }
 
 // 保存昵称
