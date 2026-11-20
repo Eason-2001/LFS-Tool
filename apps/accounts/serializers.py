@@ -2,7 +2,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Memo
+from .models import Memo, Profile
 
 
 class RegisterSerializer(serializers.Serializer):
@@ -31,11 +31,27 @@ class RegisterSerializer(serializers.Serializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    """对外返回的用户信息，不包含密码等敏感字段"""
+    """对外返回的用户信息，不含密码等敏感字段；昵称/头像来自关联 Profile"""
+
+    nickname = serializers.SerializerMethodField()
+    avatar = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "username"]
+        fields = ["id", "username", "nickname", "avatar"]
+
+    @staticmethod
+    def _get_profile(user):
+        # 老用户可能还没有 Profile，get_or_create 兜底建一条
+        profile, _ = Profile.objects.get_or_create(user=user)
+        return profile
+
+    def get_nickname(self, user):
+        return self._get_profile(user).nickname
+
+    def get_avatar(self, user):
+        avatar = self._get_profile(user).avatar
+        return avatar.url if avatar else None
 
 
 class MemoSerializer(serializers.ModelSerializer):

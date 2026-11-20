@@ -3,11 +3,14 @@
     <div class="memo-card">
       <div class="memo-header">
         <h1 class="page-title">📝 我的备忘录</h1>
-        <router-link to="/" class="back-btn">🏠 返回主页</router-link>
+        <div class="header-actions">
+          <button v-if="!showForm" class="add-btn" @click="openCreate">＋ 写备忘</button>
+          <router-link to="/" class="back-btn">🏠 主页</router-link>
+        </div>
       </div>
 
-      <!-- 新建 / 编辑表单 -->
-      <div class="form-box">
+      <!-- 新建表单 -->
+      <div v-if="showForm" class="form-box">
         <input v-model="formTitle" type="text" placeholder="标题" class="title-input" />
 
         <Toolbar
@@ -27,24 +30,26 @@
 
         <div class="form-actions">
           <button class="add-btn" :disabled="!formTitle || loading" @click="submitMemo">
-            {{ loading ? '保存中…' : editingId ? '💾 保存修改' : '＋ 新建备忘录' }}
+            {{ loading ? '保存中…' : '保存备忘' }}
           </button>
-          <button v-if="editingId" class="cancel-btn" @click="resetForm">取消编辑</button>
+          <button class="cancel-btn" @click="cancelForm">取消</button>
         </div>
       </div>
 
-      <!-- 备忘录列表 -->
+      <!-- 备忘录列表：只展示概览，点击进详情 -->
       <div v-if="memos.length" class="memo-list">
-        <div v-for="memo in memos" :key="memo.id" class="memo-item">
+        <div
+          v-for="memo in memos"
+          :key="memo.id"
+          class="memo-item"
+          @click="goDetail(memo)"
+        >
           <div class="memo-main">
             <h3>{{ memo.title }}</h3>
-            <div v-if="memo.content" class="memo-content" v-html="memo.content"></div>
+            <p class="memo-excerpt">{{ excerpt(memo.content, 80) || '（无正文）' }}</p>
             <span class="memo-time">{{ formatTime(memo.updated_at) }}</span>
           </div>
-          <div class="item-actions">
-            <button class="edit-btn" @click="startEdit(memo)">编辑</button>
-            <button class="del-btn" @click="removeMemo(memo)">删除</button>
-          </div>
+          <span class="item-arrow">›</span>
         </div>
       </div>
 
@@ -55,21 +60,22 @@
 
 <script setup>
 import { ref, shallowRef, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { Editor, Toolbar } from '@wangeditor/editor-for-vue'
 import '@wangeditor/editor/dist/css/style.css'
 import { request } from '../api/request'
 import { useToast } from '../composables/useToast'
-import { useConfirm } from '../composables/useConfirm'
 import { useAuth } from '../composables/useAuth'
+import { excerpt } from '../utils/html'
 
+const router = useRouter()
 const { toast } = useToast()
-const { confirmDialog } = useConfirm()
 const { isLogin } = useAuth()
 
 const memos = ref([])
+const showForm = ref(false)
 const formTitle = ref('')
 const formHtml = ref('')
-const editingId = ref(null) // null=新建；数字=正在编辑哪条
 const loading = ref(false)
 const editorRef = shallowRef(null)
 
@@ -108,64 +114,35 @@ const fetchMemos = async () => {
   if (data.code === 200) memos.value = data.data
 }
 
-// 清空表单，回到新建状态
-const resetForm = () => {
-  editingId.value = null
+const openCreate = () => {
+  showForm.value = true
+}
+
+const cancelForm = () => {
+  showForm.value = false
   formTitle.value = ''
   formHtml.value = ''
-  editorRef.value?.setHtml('')
 }
 
-// 点“编辑”：把原内容填进编辑器
-const startEdit = (memo) => {
-  editingId.value = memo.id
-  formTitle.value = memo.title
-  formHtml.value = memo.content || ''
-  editorRef.value?.setHtml(memo.content || '')
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
-// 新建或保存修改
+// 新建备忘
 const submitMemo = async () => {
   loading.value = true
   const payload = { title: formTitle.value, content: formHtml.value }
-  let res
-  if (editingId.value) {
-    res = await request(`/api/accounts/memos/${editingId.value}/`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    })
-  } else {
-    res = await request('/api/accounts/memos/', {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    })
-  }
+  const { data } = await request('/api/accounts/memos/', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  })
   loading.value = false
-  const { data } = res
   if (data.code === 200) {
-    resetForm()
+    toast('备忘已保存', 'success')
+    cancelForm()
     fetchMemos()
   } else {
     toast(data.message || '保存失败', 'error')
   }
 }
 
-// 删除
-const removeMemo = async (memo) => {
-  const ok = await confirmDialog({
-    title: '删除备忘录',
-    message: `确定删除「${memo.title}」吗？`,
-  })
-  if (!ok) return
-  const { data } = await request(`/api/accounts/memos/${memo.id}/`, { method: 'DELETE' })
-  if (data.code === 200) {
-    if (editingId.value === memo.id) resetForm()
-    fetchMemos()
-  } else {
-    toast(data.message || '删除失败', 'error')
-  }
-}
+const goDetail = (memo) => router.push(`/memo/${memo.id}`)
 
 // 时间格式化：只取年月日 时分
 const formatTime = (iso) => (iso ? iso.replace('T', ' ').slice(0, 16) : '')
@@ -180,7 +157,7 @@ onBeforeUnmount(() => {
 .page-container {
   max-width: 760px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 56px 20px;
 }
 .memo-card {
   background: rgba(255, 255, 255, 0.82);
@@ -200,6 +177,11 @@ onBeforeUnmount(() => {
 .page-title {
   font-size: 26px;
   color: #1a1a1a;
+}
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .back-btn {
   padding: 10px 22px;
@@ -286,11 +268,17 @@ onBeforeUnmount(() => {
 .memo-item {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: 16px;
   background: #f6f8ff;
   border-radius: 12px;
-  padding: 16px 18px;
+  padding: 18px 20px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.memo-item:hover {
+  background: #ecefff;
+  transform: translateY(-2px);
 }
 .memo-main {
   flex: 1;
@@ -301,41 +289,25 @@ onBeforeUnmount(() => {
   color: #1a1a1a;
   margin-bottom: 6px;
 }
-.memo-content {
+.memo-excerpt {
   font-size: 14px;
-  color: #333;
-  line-height: 1.7;
+  color: #666;
+  line-height: 1.6;
   margin-bottom: 6px;
   word-break: break-word;
-}
-.memo-content :deep(img) {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 .memo-time {
   font-size: 12px;
   color: #999;
 }
-.item-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  white-space: nowrap;
-}
-.edit-btn {
-  border: none;
-  background: transparent;
-  color: #5c70e0;
-  font-size: 14px;
-  cursor: pointer;
-}
-.del-btn {
-  border: none;
-  background: transparent;
-  color: #e06c6c;
-  font-size: 14px;
-  cursor: pointer;
+.item-arrow {
+  font-size: 22px;
+  color: #b3bcd6;
+  flex-shrink: 0;
 }
 .empty {
   text-align: center;

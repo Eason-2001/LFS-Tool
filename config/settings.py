@@ -57,8 +57,8 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -136,7 +136,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/ref/settings/
 
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
 # 生产环境 collectstatic 收集后端静态文件到此目录，供 Nginx/gunicorn 分发
 STATIC_ROOT = BASE_DIR / "static"
 

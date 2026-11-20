@@ -12,7 +12,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Memo
+from .models import Memo, Profile
 from .serializers import MemoSerializer, RegisterSerializer, UserSerializer
 
 # 备忘录插图允许的类型与大小上限
@@ -163,4 +163,79 @@ class MemoImageUploadView(APIView):
         url = f"/media/memo_images/{filename}"
         return Response(
             {"code": 200, "message": "上传成功", "data": {"url": url}}
+        )
+
+
+class ProfileView(APIView):
+    """GET /api/accounts/profile/ 查看当前用户资料；PUT 修改昵称"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response(
+            {"code": 200, "message": "success", "data": UserSerializer(request.user).data}
+        )
+
+    def put(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        nickname = str(request.data.get("nickname", "")).strip()
+        if len(nickname) > 30:
+            return Response(
+                {"code": 400, "message": "昵称不能超过 30 个字符"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        profile.nickname = nickname
+        profile.save()
+        return Response(
+            {"code": 200, "message": "资料已更新", "data": UserSerializer(request.user).data}
+        )
+
+
+class AvatarUploadView(APIView):
+    """POST /api/accounts/avatar/ 上传头像，返回更新后的用户资料"""
+
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser]
+
+    def post(self, request):
+        image = request.FILES.get("avatar")
+        if not image:
+            return Response(
+                {"code": 400, "message": "未收到图片"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ext = image.name.split(".")[-1].lower()
+        if ext not in ALLOWED_IMAGE_EXT:
+            return Response(
+                {"code": 400, "message": "仅支持 jpg/png/gif/webp 图片"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        if image.size > MAX_IMAGE_SIZE:
+            return Response(
+                {"code": 400, "message": "图片不能超过 5MB"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+
+        # 替换头像时删掉旧文件，避免磁盘堆积
+        if profile.avatar:
+            old_path = profile.avatar.path
+            if os.path.exists(old_path):
+                os.remove(old_path)
+
+        upload_dir = os.path.join(settings.MEDIA_ROOT, "avatars")
+        os.makedirs(upload_dir, exist_ok=True)
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        file_path = os.path.join(upload_dir, filename)
+        with open(file_path, "wb") as f:
+            for chunk in image.chunks():
+                f.write(chunk)
+
+        profile.avatar = f"avatars/{filename}"
+        profile.save()
+
+        return Response(
+            {"code": 200, "message": "头像已更新", "data": UserSerializer(request.user).data}
         )

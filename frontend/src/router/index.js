@@ -8,6 +8,8 @@ import ConvertView from '../views/ConvertView.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
 import MemoView from '../views/MemoView.vue'
+import MemoDetailView from '../views/MemoDetailView.vue'
+import ProfileView from '../views/ProfileView.vue'
 import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
@@ -51,6 +53,20 @@ const router = createRouter({
       path: '/memo',
       name: 'memo',
       component: MemoView,
+      meta: { requiresAuth: true }
+    },
+    // 备忘录详情：单条查看 / 编辑 / 删除
+    {
+      path: '/memo/:id',
+      name: 'memo-detail',
+      component: MemoDetailView,
+      meta: { requiresAuth: true }
+    },
+    // 个人中心：需要登录才能访问
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
       meta: { requiresAuth: true }
     }
   ]

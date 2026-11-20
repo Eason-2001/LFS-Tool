@@ -29,3 +29,19 @@ class Memo(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class Profile(models.Model):
+    """用户资料扩展：与内置 User 一对一，存放昵称、头像，不污染内置用户表"""
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        related_name="profile",
+        verbose_name="用户",
+    )
+    nickname = models.CharField("昵称", max_length=30, blank=True, default="")
+    avatar = models.ImageField("头像", upload_to="avatars/", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username} 的资料"

@@ -1,19 +1,5 @@
 <template>
   <div class="home-container">
-    <!-- 右上角：未登录显示登录/注册，已登录显示用户名和退出 -->
-    <div class="top-bar">
-      <div class="auth-area">
-        <template v-if="isLogin">
-          <span class="username">👤 {{ state.user.username }}</span>
-          <button class="ghost-btn" @click="handleLogout">退出</button>
-        </template>
-        <template v-else>
-          <router-link to="/login" class="ghost-btn">登录</router-link>
-          <router-link to="/register" class="primary-btn">注册</router-link>
-        </template>
-      </div>
-    </div>
-
     <h1 class="page-title">L F S 工 具 箱</h1>
     <p class="page-subtitle">实用小工具，一站搞定</p>
 
@@ -46,7 +32,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
 
 const router = useRouter()
-const { state, isLogin, logout } = useAuth()
+const { isLogin } = useAuth()
 
 // 点备忘录：已登录直接进，未登录跳登录页并记下回来的地址
 const gotoMemo = () => {
@@ -56,62 +42,26 @@ const gotoMemo = () => {
     router.push({ name: 'login', query: { redirect: '/memo' } })
   }
 }
-
-const handleLogout = () => {
-  logout()
-  router.push('/')
-}
 </script>
 
 <style scoped>
 .home-container {
   max-width: 1000px;
   margin: 0 auto;
-  padding: 40px 20px 80px;
-}
-.top-bar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 40px;
-}
-.auth-area {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.username {
-  color: #fff;
-  font-size: 15px;
-}
-.ghost-btn {
-  padding: 8px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #fff;
-  text-decoration: none;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-}
-.primary-btn {
-  padding: 8px 18px;
-  border-radius: 10px;
-  font-size: 14px;
-  color: #fff;
-  text-decoration: none;
-  background: linear-gradient(180deg, rgba(96, 140, 245, 0.95), rgba(92, 112, 224, 0.95));
+  padding: 72px 20px 80px;
 }
 .page-title {
-  font-size: 60px;
+  font-size: 52px;
+  letter-spacing: 3px;
   text-align: center;
   color: #ffffff;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 .page-subtitle {
   text-align: center;
-  color: #ffffff;
-  font-size: 22px;
-  margin-bottom: 60px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 18px;
+  margin-bottom: 52px;
 }
 .card-grid {
   display: grid;

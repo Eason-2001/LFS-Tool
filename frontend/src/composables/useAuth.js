@@ -24,12 +24,18 @@ function getTokenExp(token) {
   }
 }
 
-// 是否已登录：有 access 令牌，且令牌尚未过期
+// 是否已登录：access 未过期即登录；access 过期但 refresh 仍有效，视为可续期的登录态
+// （真正发请求时由 request 层静默换新；refresh 也过期才彻底退出）
 const isLogin = computed(() => {
-  if (!state.access) return false
-  const exp = getTokenExp(state.access)
-  // 解不出 exp 时不轻易判死，交给后端 401 兜底
-  return exp == null || exp > Date.now()
+  const accessExp = state.access ? getTokenExp(state.access) : null
+  if (accessExp == null || accessExp > Date.now()) {
+    // access 有效，或解不出 exp 时不轻易判死（交后端兜底）
+    if (accessExp == null) return !!state.access
+    return true
+  }
+  // access 已过期：看 refresh 是否还在有效期内
+  const refreshExp = state.refresh ? getTokenExp(state.refresh) : null
+  return refreshExp != null && refreshExp > Date.now()
 })
 
 // 登录成功后保存令牌和用户信息
@@ -40,6 +46,20 @@ function setAuth({ access, refresh, ...user }) {
   localStorage.setItem(ACCESS_KEY, access)
   localStorage.setItem(REFRESH_KEY, refresh)
   localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+// 仅更新本地用户资料（昵称/头像变更后同步），保留原有令牌
+function setUser(user) {
+  state.user = user
+  localStorage.setItem(USER_KEY, JSON.stringify(user))
+}
+
+// 刷新令牌后保存新的 access（refresh 沿用，不动用户信息）
+function saveTokens(access, refresh) {
+  state.access = access
+  state.refresh = refresh
+  localStorage.setItem(ACCESS_KEY, access)
+  localStorage.setItem(REFRESH_KEY, refresh)
 }
 
 // 退出登录：清空内存和本地存储
@@ -53,5 +73,5 @@ function logout() {
 }
 
 export function useAuth() {
-  return { state, isLogin, setAuth, logout }
+  return { state, isLogin, setAuth, setUser, saveTokens, logout }
 }

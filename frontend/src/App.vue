@@ -1,6 +1,8 @@
 <template>
   <!-- 固定在最底层的磨砂背景层 -->
   <div class="bg-layer"></div>
+  <!-- 全局头部：首页入口 + 头像/登录状态，所有页面共享 -->
+  <AppHeader />
   <!-- 页面内容出口 -->
   <router-view />
   <!-- 全局轻提示 + 确认弹窗 -->
@@ -9,6 +11,7 @@
 </template>
 
 <script setup>
+import AppHeader from './components/AppHeader.vue'
 import Toast from './components/Toast.vue'
 import ConfirmDialog from './components/ConfirmDialog.vue'
 </script>
