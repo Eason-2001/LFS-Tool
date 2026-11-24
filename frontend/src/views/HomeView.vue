@@ -46,9 +46,9 @@ const gotoMemo = () => {
 
 <style scoped>
 .home-container {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 72px 20px 80px;
+  padding: 72px 24px 80px;
 }
 .page-title {
   font-size: 52px;
@@ -65,16 +65,20 @@ const gotoMemo = () => {
 }
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 24px;
+  max-width: 1080px;
+  margin: 0 auto;
 }
 .tool-card {
+  display: flex;
+  flex-direction: column;
   background: rgba(255, 255, 255, 0.82);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
   border: 1px solid rgba(255, 255, 255, 0.6);
   border-radius: 16px;
-  padding: 32px 24px;
+  padding: 32px 28px;
   text-decoration: none;
   color: #1a1a1a;
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
@@ -92,15 +96,24 @@ const gotoMemo = () => {
 }
 .card-icon {
   font-size: 36px;
-  margin-bottom: 16px;
+  line-height: 1;
+  height: 36px;
+  margin-bottom: 18px;
 }
 .tool-card h3 {
   font-size: 20px;
-  margin-bottom: 8px;
+  line-height: 1.3;
+  margin-bottom: 10px;
 }
 .tool-card p {
   color: #666;
   font-size: 14px;
   line-height: 1.5;
+}
+@media (max-width: 900px) {
+  .card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .card-grid { grid-template-columns: 1fr; }
 }
 </style>

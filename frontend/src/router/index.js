@@ -10,6 +10,7 @@ import RegisterView from '../views/RegisterView.vue'
 import MemoView from '../views/MemoView.vue'
 import MemoDetailView from '../views/MemoDetailView.vue'
 import ProfileView from '../views/ProfileView.vue'
+import LifeView from '../views/LifeView.vue'
 import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
@@ -19,6 +20,12 @@ const router = createRouter({
       path: '/',
       name: 'home',
       component: HomeView
+    },
+    // 生活信息：天气 + 每日一句（公开）
+    {
+      path: '/life',
+      name: 'life',
+      component: LifeView
     },
     // 二级：格式转换分类选择页
     {

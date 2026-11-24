@@ -11,6 +11,9 @@ PyMySQL>=1.1.0
 # JWT 双令牌鉴权
 djangorestframework-simplejwt>=5.3.1
 
+# 第三方接口请求（天气 / 一言代理）
+requests>=2.31.0
+
 # 文档/文本转换
 python-docx>=1.1.0
 pdf2docx>=0.5.8

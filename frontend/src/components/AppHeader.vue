@@ -1,7 +1,28 @@
 <template>
   <header class="app-header">
     <div class="header-inner">
-      <router-link to="/" class="brand">🧰 LFS 工具箱</router-link>
+      <div class="header-left">
+        <router-link to="/" class="brand">
+          <svg class="brand-logo" viewBox="0 0 48 48" fill="none" aria-label="LFS">
+            <rect x="4" y="4" width="40" height="40" rx="10" stroke="currentColor" stroke-width="3.5"/>
+            <text x="24" y="30" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="15" fill="currentColor">LFS</text>
+          </svg>
+          <span>LFS 工具箱</span>
+        </router-link>
+        <!-- 顶栏天气小部件：点击进入天气详情页 -->
+        <router-link
+          v-if="weather"
+          to="/life"
+          class="weather-widget"
+          :title="`${weather.city} ${weather.now.text} ${weather.now.temperature}°`"
+        >
+          <span class="w-emoji">{{ weatherEmoji(weather.now.text) }}</span>
+          <span class="w-info">
+            <span class="w-temp">{{ weather.now.temperature }}°</span>
+            <span class="w-city">{{ weather.city }} · {{ weather.now.text }}</span>
+          </span>
+        </router-link>
+      </div>
 
       <div class="header-right">
         <!-- 已登录：头像 + 下拉菜单 -->
@@ -31,9 +52,12 @@
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '../composables/useAuth'
+import { useLife } from '../composables/useLife'
+import { weatherEmoji } from '../utils/weather'
 
 const router = useRouter()
 const { state, isLogin, logout } = useAuth()
+const { weather, loadWeather } = useLife()
 
 const defaultAvatar = '/default-avatar.svg'
 const menuOpen = ref(false)
@@ -65,7 +89,10 @@ const onLogout = () => {
 const onDocClick = (e) => {
   if (!e.target.closest('.avatar-wrap')) closeMenu()
 }
-onMounted(() => document.addEventListener('click', onDocClick))
+onMounted(() => {
+  document.addEventListener('click', onDocClick)
+  loadWeather()
+})
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 </script>
 
@@ -81,20 +108,73 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 }
 
 .header-inner {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
-  padding: 16px 20px;
+  padding: 16px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
 .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   color: #fff;
   font-size: 18px;
   font-weight: 600;
   text-decoration: none;
   letter-spacing: 1px;
+}
+
+.brand-logo {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.weather-widget {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  text-decoration: none;
+  padding: 0;
+  border: none;
+  background: transparent;
+}
+
+.weather-widget:hover {
+  opacity: 0.8;
+}
+
+.w-emoji {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.w-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.w-temp {
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.w-city {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .header-right {

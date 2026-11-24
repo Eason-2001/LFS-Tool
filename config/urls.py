@@ -24,6 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/converter/', include('apps.converter.urls')),
     path('api/accounts/', include('apps.accounts.urls')),
+    path('api/life/', include('apps.life.urls')),
 ]
 
 # 开发环境直接由 Django 服务 media 图片；线上由 Nginx 优先反代 /media/

@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'apps.converter',
     'apps.accounts',
+    'apps.life',
     'rest_framework',
     'corsheaders',
 
@@ -148,6 +149,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 # 文件上传配置
 MEDIA_URL = "/media/"
 MEDIA_ROOT = os.path.join(BASE_DIR, "outputs")
+
+# 第三方服务：心知天气 API Key（走环境变量，不写进代码库）
+SENIVERSE_KEY = os.environ.get("SENIVERSE_KEY", "")
 
 # 跨域：前后端经 Nginx 同域反代后本不依赖 CORS，这里保留全开以便本地直连调试
 CORS_ALLOW_ALL_ORIGINS = True

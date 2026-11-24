@@ -41,6 +41,8 @@ services:
       - DB_USER=lfs
       - DB_PASSWORD=lfs123456
       - DB_PORT=3306
+      # 心知天气 API Key：注册后把密钥填到这里，勿提交真实值到公开仓库
+      - SENIVERSE_KEY=
     volumes:
       # 转换产物、临时上传挂到宿主机 data 目录；数据库由 MySQL 容器的卷负责
       - ./data/outputs:/app/outputs
