@@ -57,13 +57,16 @@ docker compose version
 git clone https://github.com/Eason-2001/LFS-Tool.git
 cd LFS-Tool
 
-# 准备持久化目录；数据库文件先预创建，避免 Docker 把单文件挂载当成目录
+# 准备持久化目录
 mkdir -p data/outputs data/tmp_uploads
-touch data/db.sqlite3
 
-# 第三方服务密钥：编辑 docker-compose.yml，在 backend.environment 填入
-#   SENIVERSE_KEY=心知天气 Key（天气板块，留空则天气不可用）
-#   SHOWAPI_KEY=万维易源 appKey（命理测算：紫微排盘 / 生肖运势 / 黄历，留空则中式测算不可用）
+# 配置本地环境变量（.env 已被 .gitignore 忽略，不会进仓库）
+cp .env.example .env
+# 编辑 .env 填入：
+#   MYSQL_PASSWORD / MYSQL_ROOT_PASSWORD / DB_PASSWORD  数据库密码（DB_PASSWORD 与 MYSQL_PASSWORD 填同一值）
+#   SENIVERSE_KEY  心知天气 Key（天气板块，留空则天气不可用）
+#   SHOWAPI_KEY    万维易源 appKey（命理测算：紫微排盘 / 生肖运势 / 黄历，留空则中式测算不可用）
+vi .env
 
 # 构建并后台启动（首次构建要装系统依赖、pip、npm，耗时较长）
 sudo docker compose up -d --build
@@ -141,7 +144,9 @@ sudo docker compose exec backend bash
 后端：
 
 ```bash
-cd /home/lfspro/LFS
+cd ~/LFS/LFS-Tool
+# 本地直连 127.0.0.1:3306 的 MySQL，默认账号 lfs / lfs123456（与 settings 兜底一致）；
+# 要改库地址/账号时再导出 DB_HOST / DB_NAME / DB_USER / DB_PASSWORD / DB_PORT。
 # 需要命理 / 天气板块时，先导出对应密钥（不导出则对应板块提示未配置）
 export SHOWAPI_KEY=万维易源appKey
 export SENIVERSE_KEY=心知天气Key

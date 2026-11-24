@@ -5,10 +5,11 @@ services:
     image: mysql:8.0
     container_name: lfs-mysql
     environment:
-      MYSQL_DATABASE: lfs_tool
-      MYSQL_USER: lfs
-      MYSQL_PASSWORD: lfs123456
-      MYSQL_ROOT_PASSWORD: root123456
+      # 库名/账号走默认值，密码从同目录 .env 读取（:? 表示未设置时报错提示，不允许空密码启动）
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-lfs_tool}
+      MYSQL_USER: ${MYSQL_USER:-lfs}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:?请在 .env 中设置 MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?请在 .env 中设置 MYSQL_ROOT_PASSWORD}
       TZ: Asia/Shanghai
     volumes:
       # MySQL 数据文件挂到宿主机 data/mysql，容器重建/换机器不丢数据
@@ -35,16 +36,16 @@ services:
       - DJANGO_DEBUG=0
       # 以后绑域名，把域名追加到这里，逗号分隔
       - DJANGO_ALLOWED_HOSTS=127.0.0.1,localhost,47.109.110.119
-      # 数据库连接：主机名 db 是 compose 内部网络里 MySQL 服务的别名
-      - DB_HOST=db
-      - DB_NAME=lfs_tool
-      - DB_USER=lfs
-      - DB_PASSWORD=lfs123456
-      - DB_PORT=3306
-      # 心知天气 API Key：注册后把密钥填到这里，勿提交真实值到公开仓库
-      - SENIVERSE_KEY=
-      # 万维易源 ShowAPI AppKey：命理（紫微排盘/生肖运势/黄历），注册后填入
-      - SHOWAPI_KEY=
+      # 数据库连接：主机名 db 是 compose 内部网络里 MySQL 服务的别名；密码从 .env 读取
+      - DB_HOST=${DB_HOST:-db}
+      - DB_NAME=${DB_NAME:-lfs_tool}
+      - DB_USER=${DB_USER:-lfs}
+      - DB_PASSWORD=${DB_PASSWORD:?请在 .env 中设置 DB_PASSWORD}
+      - DB_PORT=${DB_PORT:-3306}
+      # 心知天气 API Key：值从同目录 .env 读取（.env 已被 gitignore 忽略，勿提交真实值）
+      - SENIVERSE_KEY=${SENIVERSE_KEY:-}
+      # 万维易源 ShowAPI AppKey：命理（紫微排盘/生肖运势/黄历），值从同目录 .env 读取
+      - SHOWAPI_KEY=${SHOWAPI_KEY:-}
     volumes:
       # 转换产物、临时上传挂到宿主机 data 目录；数据库由 MySQL 容器的卷负责
       - ./data/outputs:/app/outputs

@@ -3,13 +3,26 @@
     <div class="game-layout">
       <section class="panel game-panel">
         <canvas ref="canvasRef" class="game-canvas"></canvas>
-        <p class="tips">← → / A D 移动 · 空格发球 · P 暂停 · 回车 开始 / 再来一局</p>
+        <button
+          v-if="state.status === 'play' || state.status === 'pause'"
+          class="touch-btn"
+          @click="togglePause"
+        >
+          {{ state.status === 'pause' ? '▶ 继续' : '⏸ 暂停' }}
+        </button>
+        <p class="tips">{{ isTouch ? '左右拖动挡板 · 点按屏幕发球 · 下方按钮暂停' : '← → / A D 移动 · 空格发球 · P 暂停 · 回车 开始 / 再来一局' }}</p>
       </section>
 
       <section class="panel rank-panel">
         <h2 class="rank-title">🏆 排行榜</h2>
         <div v-if="me" class="me-row">
-          我的名次 <b>#{{ me.rank }}</b> · 最佳 <b>{{ me.best }}</b> 分 · 共对局 {{ me.plays }} 次
+          <img
+            class="rank-avatar"
+            :src="authState.user?.avatar || DEFAULT_AVATAR"
+            alt="我的头像"
+            @error="onAvatarError"
+          />
+          <span>我的名次 <b>#{{ me.rank }}</b> · 最佳 <b>{{ me.best }}</b> 分 · 共对局 {{ me.plays }} 次</span>
         </div>
         <ol v-if="leaderboard.length" class="rank-list">
           <li
@@ -18,6 +31,12 @@
             :class="{ mine: item.username === authState.user?.username }"
           >
             <span class="rank-no">{{ i + 1 }}</span>
+            <img
+              class="rank-avatar"
+              :src="item.avatar || DEFAULT_AVATAR"
+              alt="头像"
+              @error="onAvatarError"
+            />
             <span class="rank-name">{{ item.nickname || item.username }}</span>
             <span class="rank-score">{{ item.best_score }} 分</span>
           </li>
@@ -37,7 +56,14 @@ import { useAuth } from '../composables/useAuth'
 
 const { state: authState } = useAuth()
 
+const DEFAULT_AVATAR = '/default-avatar.svg'
+
+function onAvatarError(e) {
+  e.target.src = DEFAULT_AVATAR
+}
+
 const canvasRef = ref(null)
+const isTouch = ref(false)
 
 // 逻辑坐标系
 const W = 900
@@ -69,6 +95,7 @@ let powerups = []
 let particles = []
 let stars = []
 let keys = { left: false, right: false }
+let touchId = null
 let bannerMsg = ''
 let bannerT = 0
 let slowT = 0
@@ -184,7 +211,7 @@ function resetGame() {
   particles = []
   buildLevel(1)
   spawnBall()
-  bannerMsg = '第 1 关 · 空格发球'
+  bannerMsg = isTouch.value ? '第 1 关 · 点按发球' : '第 1 关 · 空格发球'
   bannerT = 2
   state.status = 'play'
 }
@@ -534,18 +561,18 @@ function draw(t) {
     overlay(0.72)
     centerText('霓 虹 打 砖 块', H / 2 - 70, 52, '#e6fbff', 26)
     centerText('清屏得分 · 道具护体 · 连击加分', H / 2 - 16, 17, '#9fd8ff', 8)
-    centerText('← → 移动 · 空格 发球 · P 暂停', H / 2 + 22, 14, '#5f7ba6')
-    centerText('按 空格 开始', H / 2 + 78, 20, '#00e5ff', 12)
+    centerText(isTouch.value ? '拖动挡板 · 点按发球' : '← → 移动 · 空格 发球 · P 暂停', H / 2 + 22, 14, '#5f7ba6')
+    centerText(isTouch.value ? '点按屏幕开始' : '按 空格 开始', H / 2 + 78, 20, '#00e5ff', 12)
   } else if (state.status === 'pause') {
     overlay(0.6)
     centerText('已 暂 停', H / 2 - 20, 42, '#cfe3ff', 16)
-    centerText('按 P 继续', H / 2 + 36, 16, '#5f7ba6')
+    centerText(isTouch.value ? '点按屏幕继续' : '按 P 继续', H / 2 + 36, 16, '#5f7ba6')
   } else if (state.status === 'over') {
     overlay(0.78)
     centerText('游 戏 结 束', H / 2 - 64, 46, '#ff5d8f', 22)
     centerText('本局得分 ' + state.score, H / 2 - 6, 24, '#e6fbff', 10)
     if (state.score >= state.best && state.score > 0) centerText('★ 新纪录 ★', H / 2 + 34, 18, '#ffd166', 12)
-    centerText('按 回车 再来一局', H / 2 + 82, 18, '#00e5ff', 10)
+    centerText(isTouch.value ? '点按再来一局' : '按 回车 再来一局', H / 2 + 82, 18, '#00e5ff', 10)
   }
 }
 
@@ -578,17 +605,72 @@ function onKeyUp(e) {
   if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.right = false
 }
 
+// ---------- 触屏输入 ----------
+function clampPaddleX(x) {
+  return Math.max(paddle.w / 2 + 8, Math.min(W - paddle.w / 2 - 8, x))
+}
+
+function clientToGameX(clientX) {
+  const rect = canvasRef.value.getBoundingClientRect()
+  return (clientX - rect.left) * (W / rect.width)
+}
+
+function togglePause() {
+  ensureAudio()
+  if (state.status === 'play') state.status = 'pause'
+  else if (state.status === 'pause') state.status = 'play'
+}
+
+function onTouchStart(e) {
+  e.preventDefault()
+  ensureAudio()
+  const t = e.changedTouches[0]
+  touchId = t.identifier
+  const gx = clientToGameX(t.clientX)
+
+  if (state.status === 'menu' || state.status === 'over') {
+    resetGame()
+    return
+  }
+  if (state.status === 'pause') {
+    state.status = 'play'
+    return
+  }
+  // 进行中：挡板跟随触点，有黏滞球则发球
+  paddle.x = clampPaddleX(gx)
+  launch()
+}
+
+function onTouchMove(e) {
+  e.preventDefault()
+  const t = [...e.changedTouches].find(x => x.identifier === touchId)
+  if (!t) return
+  paddle.x = clampPaddleX(clientToGameX(t.clientX))
+}
+
+function onTouchEnd() {
+  touchId = null
+}
+
 onMounted(() => {
   ctx = canvasRef.value.getContext('2d')
   dpr = Math.min(2, window.devicePixelRatio || 1)
   canvasRef.value.width = W * dpr
   canvasRef.value.height = H * dpr
+  isTouch.value =
+    (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+    'ontouchstart' in window
   for (let i = 0; i < 90; i++) {
     stars.push({ x: Math.random() * W, y: Math.random() * H, r: Math.random() * 1.6 + 0.3, tw: Math.random() * 6.28 + 0.6 })
   }
   fetchLeaderboard()
   window.addEventListener('keydown', onKeyDown)
   window.addEventListener('keyup', onKeyUp)
+  // 触屏事件：passive:false 才能 preventDefault 阻止页面滚动/缩放
+  canvasRef.value.addEventListener('touchstart', onTouchStart, { passive: false })
+  canvasRef.value.addEventListener('touchmove', onTouchMove, { passive: false })
+  canvasRef.value.addEventListener('touchend', onTouchEnd, { passive: false })
+  canvasRef.value.addEventListener('touchcancel', onTouchEnd, { passive: false })
   rafId = requestAnimationFrame(frame)
 })
 
@@ -596,6 +678,12 @@ onBeforeUnmount(() => {
   cancelAnimationFrame(rafId)
   window.removeEventListener('keydown', onKeyDown)
   window.removeEventListener('keyup', onKeyUp)
+  if (canvasRef.value) {
+    canvasRef.value.removeEventListener('touchstart', onTouchStart)
+    canvasRef.value.removeEventListener('touchmove', onTouchMove)
+    canvasRef.value.removeEventListener('touchend', onTouchEnd)
+    canvasRef.value.removeEventListener('touchcancel', onTouchEnd)
+  }
 })
 </script>
 
@@ -637,6 +725,26 @@ onBeforeUnmount(() => {
   border-radius: 12px;
   background: #070b16;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch-btn {
+  display: block;
+  margin: 14px auto 0;
+  padding: 10px 26px;
+  border: 1px solid rgba(134, 59, 255, 0.3);
+  border-radius: 999px;
+  background: rgba(134, 59, 255, 0.08);
+  color: #7a34e8;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.touch-btn:active {
+  background: rgba(134, 59, 255, 0.16);
 }
 
 .tips {
@@ -656,6 +764,9 @@ onBeforeUnmount(() => {
 }
 
 .me-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   background: rgba(134, 59, 255, 0.08);
   border: 1px solid rgba(134, 59, 255, 0.2);
   border-radius: 10px;
@@ -663,6 +774,16 @@ onBeforeUnmount(() => {
   margin-bottom: 14px;
   font-size: 14px;
   color: #444;
+}
+
+.rank-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(134, 59, 255, 0.2);
+  flex-shrink: 0;
+  background: #fff;
 }
 
 .me-row b {
@@ -733,6 +854,20 @@ onBeforeUnmount(() => {
 @media (max-width: 900px) {
   .game-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .game-container {
+    padding: 24px 12px 48px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .tips {
+    font-size: 12px;
   }
 }
 </style>

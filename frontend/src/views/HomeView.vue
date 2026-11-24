@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <img src="/logo-lfs.svg" alt="LFS 工具箱" class="home-logo" />
+    <img src="/logo-lfs.svg?v=2" alt="LFS 工具箱" class="home-logo" />
 
     <div class="card-grid">
       <!-- 格式转换卡片 -->
