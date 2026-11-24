@@ -1,7 +1,6 @@
 <template>
   <div class="home-container">
     <h1 class="page-title">L F S 工 具 箱</h1>
-    <p class="page-subtitle">实用小工具，一站搞定</p>
 
     <div class="card-grid">
       <!-- 格式转换卡片 -->
@@ -56,12 +55,6 @@ const gotoMemo = () => {
   text-align: center;
   color: #ffffff;
   margin-bottom: 16px;
-}
-.page-subtitle {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 18px;
-  margin-bottom: 52px;
 }
 .card-grid {
   display: grid;
