@@ -11,6 +11,11 @@ import MemoView from '../views/MemoView.vue'
 import MemoDetailView from '../views/MemoDetailView.vue'
 import ProfileView from '../views/ProfileView.vue'
 import LifeView from '../views/LifeView.vue'
+import BreakoutView from '../views/BreakoutView.vue'
+import GameHubView from '../views/GameHubView.vue'
+import DivinationHubView from '../views/DivinationHubView.vue'
+import BaziView from '../views/BaziView.vue'
+import HoroscopeView from '../views/HoroscopeView.vue'
 import { useAuth } from '../composables/useAuth'
 
 const router = createRouter({
@@ -26,6 +31,41 @@ const router = createRouter({
       path: '/life',
       name: 'life',
       component: LifeView
+    },
+    // 摸鱼小游戏：游戏选择大厅（需登录）
+    {
+      path: '/game',
+      name: 'game-hub',
+      component: GameHubView,
+      meta: { requiresAuth: true }
+    },
+    // 摸鱼小游戏：打砖块（需登录）
+    {
+      path: '/game/breakout',
+      name: 'breakout',
+      component: BreakoutView,
+      meta: { requiresAuth: true }
+    },
+    // 命理测算：选择大厅（需登录）
+    {
+      path: '/divination',
+      name: 'divination-hub',
+      component: DivinationHubView,
+      meta: { requiresAuth: true }
+    },
+    // 中式命理（需登录）
+    {
+      path: '/divination/bazi',
+      name: 'divination-bazi',
+      component: BaziView,
+      meta: { requiresAuth: true }
+    },
+    // 西式星座（需登录）
+    {
+      path: '/divination/horoscope',
+      name: 'divination-horoscope',
+      component: HoroscopeView,
+      meta: { requiresAuth: true }
     },
     // 二级：格式转换分类选择页
     {

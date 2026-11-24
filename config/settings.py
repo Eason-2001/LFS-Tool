@@ -50,6 +50,8 @@ INSTALLED_APPS = [
     'apps.converter',
     'apps.accounts',
     'apps.life',
+    'apps.game',
+    'apps.divination',
     'rest_framework',
     'corsheaders',
 
@@ -152,6 +154,9 @@ MEDIA_ROOT = os.path.join(BASE_DIR, "outputs")
 
 # 第三方服务：心知天气 API Key（走环境变量，不写进代码库）
 SENIVERSE_KEY = os.environ.get("SENIVERSE_KEY", "")
+
+# 第三方服务：万维易源 ShowAPI AppKey（命理：紫微排盘 / 生肖运势 / 黄历）
+SHOWAPI_KEY = os.environ.get("SHOWAPI_KEY", "")
 
 # 跨域：前后端经 Nginx 同域反代后本不依赖 CORS，这里保留全开以便本地直连调试
 CORS_ALLOW_ALL_ORIGINS = True

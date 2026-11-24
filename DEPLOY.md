@@ -61,6 +61,10 @@ cd LFS-Tool
 mkdir -p data/outputs data/tmp_uploads
 touch data/db.sqlite3
 
+# 第三方服务密钥：编辑 docker-compose.yml，在 backend.environment 填入
+#   SENIVERSE_KEY=心知天气 Key（天气板块，留空则天气不可用）
+#   SHOWAPI_KEY=万维易源 appKey（命理测算：紫微排盘 / 生肖运势 / 黄历，留空则中式测算不可用）
+
 # 构建并后台启动（首次构建要装系统依赖、pip、npm，耗时较长）
 sudo docker compose up -d --build
 
@@ -137,7 +141,10 @@ sudo docker compose exec backend bash
 后端：
 
 ```bash
-cd /home/lfs/LFS/LFS-Tool
+cd /home/lfspro/LFS
+# 需要命理 / 天气板块时，先导出对应密钥（不导出则对应板块提示未配置）
+export SHOWAPI_KEY=万维易源appKey
+export SENIVERSE_KEY=心知天气Key
 .venv/bin/python manage.py runserver 0.0.0.0:8000
 ```
 

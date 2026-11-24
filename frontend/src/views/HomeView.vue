@@ -1,6 +1,6 @@
 <template>
   <div class="home-container">
-    <h1 class="page-title">L F S 工 具 箱</h1>
+    <img src="/logo-lfs.svg" alt="LFS 工具箱" class="home-logo" />
 
     <div class="card-grid">
       <!-- 格式转换卡片 -->
@@ -22,6 +22,20 @@
         <h3>番茄专注钟</h3>
         <p>即将上线，敬请期待</p>
       </div>
+
+      <!-- 命理测算：中式八字 / 西式星座 -->
+      <router-link to="/divination" class="tool-card">
+        <div class="card-icon">🔮</div>
+        <h3>命理测算</h3>
+        <p>中式八字排盘 · 西式星座运势</p>
+      </router-link>
+
+      <!-- 摸鱼小游戏：游戏大厅 -->
+      <router-link to="/game" class="tool-card">
+        <div class="card-icon">🎮</div>
+        <h3>摸鱼小游戏</h3>
+        <p>休闲小游戏合集，放松一下</p>
+      </router-link>
     </div>
   </div>
 </template>
@@ -49,19 +63,17 @@ const gotoMemo = () => {
   margin: 0 auto;
   padding: 72px 24px 80px;
 }
-.page-title {
-  font-size: 52px;
-  letter-spacing: 3px;
-  text-align: center;
-  color: #ffffff;
-  margin-bottom: 16px;
+.home-logo {
+  display: block;
+  width: 128px;
+  height: 128px;
+  margin: 0 auto 44px;
+  filter: drop-shadow(0 6px 18px rgba(20, 24, 50, 0.4));
 }
 .card-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 24px;
-  max-width: 1080px;
-  margin: 0 auto;
 }
 .tool-card {
   display: flex;
