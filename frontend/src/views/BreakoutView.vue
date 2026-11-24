@@ -45,7 +45,7 @@
       </section>
     </div>
 
-    <router-link to="/" class="back-btn">🏠 返回主页</router-link>
+    <router-link to="/game" class="back-btn">🎮 返回游戏大厅</router-link>
   </div>
 </template>
 
@@ -704,14 +704,11 @@ onBeforeUnmount(() => {
 }
 
 .panel {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border: 1px solid rgba(255, 255, 255, 0.6);
+  background: rgba(20, 24, 50, 0.82);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
   padding: 20px;
-  color: #1a1a1a;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  color: #fff;
 }
 
 .game-panel {
@@ -735,27 +732,27 @@ onBeforeUnmount(() => {
   display: block;
   margin: 14px auto 0;
   padding: 10px 26px;
-  border: 1px solid rgba(134, 59, 255, 0.3);
+  border: 1px solid rgba(134, 59, 255, 0.35);
   border-radius: 999px;
-  background: rgba(134, 59, 255, 0.08);
-  color: #7a34e8;
+  background: rgba(134, 59, 255, 0.1);
+  color: #d9c9ff;
   font-size: 15px;
   cursor: pointer;
 }
 
 .touch-btn:active {
-  background: rgba(134, 59, 255, 0.16);
+  background: rgba(134, 59, 255, 0.18);
 }
 
 .tips {
   text-align: center;
   margin-top: 14px;
-  color: #666;
+  color: #9aa4c4;
   font-size: 13px;
 }
 
 .rank-panel {
-  color: #1a1a1a;
+  color: #fff;
 }
 
 .rank-title {
@@ -767,13 +764,13 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(134, 59, 255, 0.08);
-  border: 1px solid rgba(134, 59, 255, 0.2);
+  background: rgba(134, 59, 255, 0.24);
+  border: 1px solid rgba(134, 59, 255, 0.36);
   border-radius: 10px;
   padding: 10px 14px;
   margin-bottom: 14px;
   font-size: 14px;
-  color: #444;
+  color: #f0e7ff;
 }
 
 .rank-avatar {
@@ -787,7 +784,7 @@ onBeforeUnmount(() => {
 }
 
 .me-row b {
-  color: #863bff;
+  color: #fff;
 }
 
 .rank-list {
@@ -803,33 +800,35 @@ onBeforeUnmount(() => {
   gap: 14px;
   padding: 10px 14px;
   border-radius: 10px;
-  background: rgba(0, 0, 0, 0.03);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .rank-list li.mine {
-  background: rgba(134, 59, 255, 0.1);
-  border: 1px solid rgba(134, 59, 255, 0.25);
+  background: rgba(134, 59, 255, 0.26);
+  border: 1px solid rgba(134, 59, 255, 0.34);
 }
 
 .rank-no {
   width: 28px;
   font-weight: 700;
-  color: #863bff;
+  color: #e2ccff;
 }
 
 .rank-name {
   flex: 1;
   font-size: 15px;
+  color: #ffffff;
 }
 
 .rank-score {
   font-weight: 600;
-  color: #333;
+  color: #ffffff;
 }
 
 .rank-empty {
   text-align: center;
-  color: #888;
+  color: #b9c4dc;
   font-size: 14px;
   padding: 16px 0;
 }

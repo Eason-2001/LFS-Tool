@@ -26,6 +26,12 @@ const games = [
     icon: '🧱',
     name: '霓虹打砖块',
     desc: '清屏得分 · 道具护体 · 连击加分'
+  },
+  {
+    path: '/game/minesweeper',
+    icon: '💣',
+    name: '经典扫雷',
+    desc: '排雷插旗 · 三档难度 · 计时挑战'
   }
 ]
 </script>
