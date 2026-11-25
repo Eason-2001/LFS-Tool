@@ -7,9 +7,11 @@ class DivinationRecord(models.Model):
 
     KIND_BAZI = "bazi"
     KIND_HOROSCOPE = "horoscope"
+    KIND_TAROT = "tarot"
     KIND_CHOICES = [
         (KIND_BAZI, "中式命理"),
         (KIND_HOROSCOPE, "西式星座"),
+        (KIND_TAROT, "命运塔罗"),
     ]
 
     user = models.ForeignKey(

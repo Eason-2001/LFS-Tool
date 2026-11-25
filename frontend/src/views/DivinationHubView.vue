@@ -18,7 +18,8 @@
         :class="e.cls"
       >
         <div class="entry-img">
-          <img :src="e.img" :alt="e.title" />
+          <img v-if="!e.emoji" :src="e.img" :alt="e.title" />
+          <div v-else class="entry-emoji">{{ e.emoji }}</div>
         </div>
         <div class="entry-body">
           <div class="entry-head">
@@ -37,7 +38,7 @@
       <ul class="history-list">
         <li v-for="h in history" :key="h.id" class="history-item">
           <div class="history-head">
-            <span class="kind-tag" :class="h.kind">{{ h.kind === 'bazi' ? '中式' : '西式' }}</span>
+            <span class="kind-tag" :class="h.kind">{{ KIND_LABEL[h.kind] || '命理' }}</span>
             <span class="history-summary">{{ h.summary }}</span>
             <span class="history-time">{{ formatTime(h.created_at) }}</span>
           </div>
@@ -70,7 +71,17 @@ const entries = [
     tag: '黄道十二宫 · 月度星运',
     cls: 'theme-west',
   },
+  {
+    path: '/divination/tarot',
+    img: '/divination/tarot.png',
+    title: '命运塔罗',
+    desc: '三牌阵 · 直觉选牌 · 牌意解读',
+    tag: '大阿卡纳 · 正逆位',
+    cls: 'theme-tarot',
+  },
 ]
+
+const KIND_LABEL = { bazi: '中式', horoscope: '西式', tarot: '塔罗' }
 
 const history = ref([])
 
@@ -132,9 +143,9 @@ onMounted(loadHistory)
 /* ---- 卡片 ---- */
 .entry-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 24px;
-  max-width: 720px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -205,6 +216,21 @@ onMounted(loadHistory)
   background: rgba(134, 59, 255, 0.1);
 }
 
+.theme-tarot .entry-tag {
+  color: #2b6cb0;
+  background: rgba(43, 108, 176, 0.1);
+}
+
+.entry-emoji {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 64px;
+  background: linear-gradient(155deg, #4b3a8f 0%, #2c2f5e 55%, #1d2340 100%);
+}
+
 .entry-body h3 {
   font-size: 20px;
   letter-spacing: 1px;
@@ -231,6 +257,10 @@ onMounted(loadHistory)
 
 .theme-west .entry-cta {
   color: #7a34e8;
+}
+
+.theme-tarot .entry-cta {
+  color: #2b6cb0;
 }
 
 .entry-cta em {
@@ -308,6 +338,10 @@ onMounted(loadHistory)
   background: #47bfff;
 }
 
+.kind-tag.tarot {
+  background: #2b6cb0;
+}
+
 .history-summary {
   font-size: 15px;
   color: #1a1a1a;
@@ -334,6 +368,12 @@ onMounted(loadHistory)
 
 .back-btn:hover {
   background: linear-gradient(135deg, #eef1fe 0%, #f3eefc 100%);
+}
+
+@media (max-width: 900px) {
+  .entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {

@@ -1,7 +1,11 @@
 # 第三方命理 / 星座接口封装
 # 所有 appKey 只留在后端环境变量，前端不直接接触第三方服务
+import random
+
 import requests
 from django.conf import settings
+
+from . import tarot_data
 
 HTTP_TIMEOUT = 12
 
@@ -172,3 +176,35 @@ def fetch_monthly_horoscope(sign_en):
         "horoscope_en": en_text,
         "translate_failed": bool(terr),
     }, None
+
+
+# ---------- 塔罗牌（本地牌库，无第三方依赖） ----------
+
+# 牌阵：daily 每日一牌 / three 三牌占卜 / love 爱情占卜
+TAROT_SPREADS = {
+    "daily": {"count": 1, "positions": ["今日指引"], "label": "每日一牌"},
+    "three": {"count": 3, "positions": ["过去", "现在", "未来"], "label": "三牌占卜"},
+    "love": {"count": 3, "positions": ["你的期待", "关系现状", "未来走向"], "label": "爱情占卜"},
+}
+
+
+def draw_tarot(spread):
+    """按牌阵从不重复的牌堆中随机抽牌，并随机决定正位 / 逆位，返回结构化牌阵"""
+    cfg = TAROT_SPREADS[spread]
+    picked = random.sample(tarot_data.TAROT_DECK, cfg["count"])
+    cards = []
+    for position, card in zip(cfg["positions"], picked):
+        upright = random.random() < 0.5
+        cards.append(
+            {
+                "position": position,
+                "id": card["id"],
+                "name": card["name"],
+                "name_en": card["name_en"],
+                "suit": card.get("suit", "major"),
+                "upright": upright,
+                "keywords": card["keywords_up"] if upright else card["keywords_down"],
+                "reading": card["up"] if upright else card["down"],
+            }
+        )
+    return cards

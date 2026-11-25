@@ -121,6 +121,34 @@ class HoroscopeView(APIView):
         return Response({"code": 200, "message": "success", "data": result})
 
 
+class TarotView(APIView):
+    """POST /api/divination/tarot/  命运塔罗：按牌阵抽牌并解读"""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        spread = str(request.data.get("spread", "daily")).lower()
+        if spread not in services.TAROT_SPREADS:
+            return _bad_request("牌阵须为 daily / three / love")
+
+        question = str(request.data.get("question", "")).strip()[:100]
+        cfg = services.TAROT_SPREADS[spread]
+        cards = services.draw_tarot(spread)
+
+        result = {"spread": spread, "cards": cards}
+        summary = f"{cfg['label']} · {cards[0]['name']}"
+
+        DivinationRecord.objects.create(
+            user=request.user,
+            kind=DivinationRecord.KIND_TAROT,
+            input={"spread": spread, "question": question},
+            result=result,
+            summary=summary,
+        )
+
+        return Response({"code": 200, "message": "success", "data": result})
+
+
 class HistoryView(APIView):
     """GET /api/divination/history/  当前用户最近的测算记录"""
 
