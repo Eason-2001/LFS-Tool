@@ -10,6 +10,7 @@ from .serializers import LeaderboardSerializer
 # 扫雷按难度分榜，避免不同雷量混排不公平
 GAMES = {
     "breakout": "higher",
+    "tetris": "higher",
     "minesweeper-easy": "lower",
     "minesweeper-medium": "lower",
     "minesweeper-hard": "lower",

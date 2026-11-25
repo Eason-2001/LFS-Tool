@@ -32,6 +32,12 @@ const games = [
     icon: '💣',
     name: '经典扫雷',
     desc: '排雷插旗 · 三档难度 · 计时挑战'
+  },
+  {
+    path: '/game/tetris',
+    icon: '🧩',
+    name: '俄罗斯方块',
+    desc: '堆叠消行 · 等级加速 · 冲击高分'
   }
 ]
 </script>

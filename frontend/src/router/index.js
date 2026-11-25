@@ -13,6 +13,7 @@ import ProfileView from '../views/ProfileView.vue'
 import LifeView from '../views/LifeView.vue'
 import BreakoutView from '../views/BreakoutView.vue'
 import MinesweeperView from '../views/MinesweeperView.vue'
+import TetrisView from '../views/TetrisView.vue'
 import GameHubView from '../views/GameHubView.vue'
 import DivinationHubView from '../views/DivinationHubView.vue'
 import BaziView from '../views/BaziView.vue'
@@ -53,6 +54,13 @@ const router = createRouter({
       path: '/game/minesweeper',
       name: 'minesweeper',
       component: MinesweeperView,
+      meta: { requiresAuth: true }
+    },
+    // 摸鱼小游戏：俄罗斯方块（需登录）
+    {
+      path: '/game/tetris',
+      name: 'tetris',
+      component: TetrisView,
       meta: { requiresAuth: true }
     },
     // 命理测算：选择大厅（需登录）
