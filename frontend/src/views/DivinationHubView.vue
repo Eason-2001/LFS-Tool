@@ -56,6 +56,14 @@ import { request } from '../api/request'
 
 const entries = [
   {
+    path: '/divination/tarot',
+    img: '/divination/tarot.png',
+    title: '命运塔罗',
+    desc: '三牌阵 · 直觉选牌 · 牌意解读',
+    tag: '大阿卡纳 · 正逆位',
+    cls: 'theme-tarot',
+  },
+  {
     path: '/divination/bazi',
     img: '/divination/bazi.webp',
     title: '中式命理',
@@ -70,14 +78,6 @@ const entries = [
     desc: '阳历生日 · 本月运势',
     tag: '黄道十二宫 · 月度星运',
     cls: 'theme-west',
-  },
-  {
-    path: '/divination/tarot',
-    img: '/divination/tarot.png',
-    title: '命运塔罗',
-    desc: '三牌阵 · 直觉选牌 · 牌意解读',
-    tag: '大阿卡纳 · 正逆位',
-    cls: 'theme-tarot',
   },
 ]
 
