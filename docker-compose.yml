@@ -46,6 +46,10 @@ services:
       - SENIVERSE_KEY=${SENIVERSE_KEY:-}
       # 万维易源 ShowAPI AppKey：命理（紫微排盘/生肖运势/黄历），值从同目录 .env 读取
       - SHOWAPI_KEY=${SHOWAPI_KEY:-}
+      # 大模型（DeepSeek，OpenAI 兼容）塔罗个性化解读；未配置 Key 时回退本地静态牌意
+      - LLM_API_BASE=${LLM_API_BASE:-https://api.deepseek.com/v1}
+      - LLM_API_KEY=${LLM_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-deepseek-chat}
     volumes:
       # 转换产物、临时上传挂到宿主机 data 目录；数据库由 MySQL 容器的卷负责
       - ./data/outputs:/app/outputs

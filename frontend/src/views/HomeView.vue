@@ -3,6 +3,20 @@
     <img src="/logo-lfs.svg?v=2" alt="LFS 工具箱" class="home-logo" />
 
     <div class="card-grid">
+      <!-- 摸鱼小游戏：游戏大厅 -->
+      <router-link to="/game" class="tool-card">
+        <div class="card-icon">🎮</div>
+        <h3>摸鱼小游戏</h3>
+        <p>休闲小游戏合集，放松一下</p>
+      </router-link>
+
+      <!-- 命理测算：中式八字 / 西式星座 -->
+      <router-link to="/divination" class="tool-card">
+        <div class="card-icon">🔮</div>
+        <h3>命理测算</h3>
+        <p>中式八字排盘 · 西式星座运势</p>
+      </router-link>
+
       <!-- 格式转换卡片 -->
       <router-link to="/convert" class="tool-card">
         <div class="card-icon">🎨</div>
@@ -22,20 +36,6 @@
         <h3>番茄专注钟</h3>
         <p>即将上线，敬请期待</p>
       </div>
-
-      <!-- 命理测算：中式八字 / 西式星座 -->
-      <router-link to="/divination" class="tool-card">
-        <div class="card-icon">🔮</div>
-        <h3>命理测算</h3>
-        <p>中式八字排盘 · 西式星座运势</p>
-      </router-link>
-
-      <!-- 摸鱼小游戏：游戏大厅 -->
-      <router-link to="/game" class="tool-card">
-        <div class="card-icon">🎮</div>
-        <h3>摸鱼小游戏</h3>
-        <p>休闲小游戏合集，放松一下</p>
-      </router-link>
     </div>
   </div>
 </template>

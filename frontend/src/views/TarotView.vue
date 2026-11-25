@@ -81,6 +81,36 @@
             </div>
           </div>
         </div>
+
+        <!-- 等待大模型解读：仪式感加载层 -->
+        <div v-if="loading" class="loading-mask">
+          <div class="loading-orbit">
+            <span class="orbit-ring ring-outer"></span>
+            <span class="orbit-ring ring-inner"></span>
+            <span class="orbit-star">✦</span>
+            <span class="orbit-plate">
+              <span class="orbit-dot d1"></span>
+              <span class="orbit-dot d2"></span>
+              <span class="orbit-dot d3"></span>
+            </span>
+          </div>
+          <p class="loading-text">星辰正在排列</p>
+          <p class="loading-sub">牌面即将显现，请稍候勿离开</p>
+        </div>
+      </div>
+
+      <!-- 综合解答：结合全部卡牌推算的全局结论（不属于单牌，独立展示） -->
+      <div v-if="stage === 'reveal' && result" class="verdict-wrap">
+        <div v-if="verdictStage === 'gathering'" class="verdict-gather">
+          <span class="verdict-dot"></span>
+          牌面正在汇聚启示…
+        </div>
+        <div v-else-if="verdictStage === 'revealed' && result.summary" class="verdict">
+          <div class="verdict-ornament">✦</div>
+          <h3 class="verdict-title">综合解答</h3>
+          <p v-if="question" class="verdict-q">关于「{{ question }}」</p>
+          <p class="verdict-text">{{ result.summary }}</p>
+        </div>
       </div>
 
       <p class="win-tip">{{ tipText }}</p>
@@ -92,7 +122,7 @@
           class="question-input"
           type="text"
           maxlength="100"
-          placeholder="想问的问题（可选）"
+          placeholder="请写下你想问的问题（必填）"
         />
       </div>
 
@@ -100,7 +130,7 @@
         <button
           v-show="stage !== 'reveal' && (canReveal || loading || dealing)"
           class="primary-btn"
-          :disabled="!canReveal || loading || dealing"
+          :disabled="!canReveal || !hasQuestion || loading || dealing"
           @click="reveal"
         >
           {{ btnText }}
@@ -108,27 +138,6 @@
       </div>
 
       <p v-if="errorTip" class="error-tip">{{ errorTip }}</p>
-
-      <!-- 结果解读（横排牌下方） -->
-      <div v-if="stage === 'reveal' && result" class="win-reading">
-        <div
-          v-for="(card, i) in result.cards"
-          :key="card.id"
-          class="reading-item"
-          :data-idx="i"
-          :class="{ active: activeIdx === i }"
-        >
-          <div class="reading-head">
-            <span class="reading-pos">{{ card.position }}</span>
-            <span class="reading-name">{{ card.name }}</span>
-            <span class="orientation" :class="card.upright ? 'up' : 'down'">
-              {{ card.upright ? '正位' : '逆位' }}
-            </span>
-          </div>
-          <div class="reading-kw">{{ card.keywords }}</div>
-          <p class="reading-text">{{ card.reading }}</p>
-        </div>
-      </div>
 
       <!-- 底部牌阵切换 -->
       <div class="win-tabs">
@@ -145,6 +154,46 @@
 
       <router-link to="/divination" class="win-back">← 返回选择</router-link>
     </div>
+
+    <!-- 单牌详情弹框 -->
+    <teleport to="body">
+      <div v-if="detailCard" class="detail-mask" @click.self="closeDetail">
+        <div class="detail-modal">
+          <button class="detail-close" @click="closeDetail" aria-label="关闭">✕</button>
+          <div class="dm-head">
+            <img
+              class="dm-img"
+              :src="cardImg(detailCard.id)"
+              :alt="detailCard.name"
+              :class="{ rotated: !detailCard.upright }"
+            />
+            <div class="dm-meta">
+              <h2>{{ detailCard.name }}</h2>
+              <p class="dm-en">{{ detailCard.name_en }} · {{ suitLabel(detailCard.suit) }}</p>
+              <span class="dm-dir" :class="detailCard.upright ? 'up' : 'down'">
+                {{ detailCard.upright ? '正位' : '逆位' }}
+              </span>
+            </div>
+          </div>
+
+          <div class="dm-kw">
+            <span v-for="k in keywordList(detailCard)" :key="k" class="dm-kw-tag">{{ k }}</span>
+          </div>
+
+          <!-- 本地静态牌意（始终展示） -->
+          <section class="dm-block">
+            <h3>{{ detailCard.upright ? '正位解读' : '逆位解读' }}</h3>
+            <p class="dm-reading">{{ detailCard.reading }}</p>
+          </section>
+
+          <!-- AI 个性化解读（结合提问生成，有则展示） -->
+          <section v-if="detailCard.ai_reading" class="dm-block dm-ai">
+            <h3>个性化解读</h3>
+            <p class="dm-reading">{{ detailCard.ai_reading }}</p>
+          </section>
+        </div>
+      </div>
+    </teleport>
   </div>
 </template>
 
@@ -186,6 +235,10 @@ const errorTip = ref('')
 const slotDone = ref([])
 const flies = ref([])
 const activeIdx = ref(-1)
+// 当前打开的详情弹框牌
+const detailCard = ref(null)
+// 综合解答浮现阶段：idle 未开始 | gathering 汇聚提示 | revealed 结论已浮现
+const verdictStage = ref('idle')
 // 已发牌：起点坐标读取完成后，被选中的牌从牌堆原位移除
 const dealt = ref(false)
 // 整堆牌离场：飞牌起点缓存完成后，整个牌堆层直接隐藏，底部只留背景
@@ -215,6 +268,7 @@ let genId = 0
 let shuffleTimers = []
 
 const canReveal = computed(() => selected.value.length === SPREADS[spread.value].count)
+const hasQuestion = computed(() => question.value.trim().length > 0)
 
 const btnText = computed(() => {
   if (loading.value || dealing.value) return '正在抽牌…'
@@ -258,8 +312,8 @@ function measure() {
 
 const tipText = computed(() => {
   if (stage.value === 'shuffle') return '正在洗牌…'
-  if (stage.value === 'reveal') return '点击牌面，查看下方解读'
-  return `静心凝神 · 横划牌阵，选 ${SPREADS[spread.value].count} 张牌（已选 ${selected.value.length}/${SPREADS[spread.value].count}）`
+  if (stage.value === 'reveal') return '点击牌面，查看解读'
+  return `静心凝神 · 写下问题，横划牌阵选 ${SPREADS[spread.value].count} 张牌（已选 ${selected.value.length}/${SPREADS[spread.value].count}）`
 })
 
 function clearShuffleTimers() {
@@ -429,6 +483,10 @@ function toggleBack(i) {
 
 async function reveal() {
   if (!canReveal.value || loading.value || dealing.value) return
+  if (!hasQuestion.value) {
+    errorTip.value = '请先写下你想问的问题'
+    return
+  }
   loading.value = true
   dealing.value = true
   errorTip.value = ''
@@ -440,6 +498,7 @@ async function reveal() {
     if (data && data.code === 200) {
       result.value = data.data
       slotDone.value = result.value.cards.map(() => false)
+      verdictStage.value = 'idle'
       stage.value = 'reveal'
       await nextTick()
       dealFlies()
@@ -528,15 +587,42 @@ function startFly(f) {
     setTimeout(() => {
       slotDone.value[f.slot] = true
       flies.value = flies.value.filter((x) => x.key !== f.key)
+      // 全部牌翻完后，进入综合解答的汇聚 → 浮现流程
+      if (slotDone.value.every(Boolean)) scheduleVerdict()
     }, 312 + 600 + 20),
+  )
+}
+
+// 综合解答：先显示汇聚提示，停顿后浮现全局结论
+function scheduleVerdict() {
+  verdictStage.value = 'gathering'
+  shuffleTimers.push(
+    setTimeout(() => {
+      verdictStage.value = 'revealed'
+    }, 900),
   )
 }
 
 function onSlotClick(i) {
   if (stage.value !== 'reveal' || !slotDone.value[i]) return
-  activeIdx.value = i
-  const item = document.querySelector(`.reading-item[data-idx="${i}"]`)
-  item?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const card = result.value.cards[i]
+  if (!card) return
+  detailCard.value = card
+}
+
+function closeDetail() {
+  detailCard.value = null
+}
+
+function suitLabel(suit) {
+  return SUIT_LABEL[suit] || ''
+}
+
+function keywordList(card) {
+  return String(card?.keywords || '')
+    .split('·')
+    .map((k) => k.trim())
+    .filter(Boolean)
 }
 
 function flyStyle(f) {
@@ -560,6 +646,8 @@ function reset() {
   slotDone.value = []
   flies.value = []
   activeIdx.value = -1
+  detailCard.value = null
+  verdictStage.value = 'idle'
   dealt.value = false
   deckGone.value = false
   M.value = 38.5
@@ -1006,72 +1094,311 @@ onBeforeUnmount(() => {
 }
 
 /* ---- 结果解读 ---- */
-.win-reading {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 0 20px 16px;
-}
-
-.reading-item {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(134, 59, 255, 0.2);
-  border-radius: 14px;
-  padding: 13px 14px;
-}
-
-.reading-item.active {
-  border-color: rgba(232, 198, 106, 0.55);
-  background: rgba(232, 198, 106, 0.08);
-}
-
-.reading-head {
+/* ---- 单牌详情弹框 ---- */
+.detail-mask {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(5, 3, 16, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 5px;
+  justify-content: center;
+  padding: 20px;
 }
 
-.reading-pos {
-  font-size: 12px;
-  color: #b98cff;
-  font-weight: 600;
+.detail-modal {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  background: radial-gradient(130% 70% at 50% 112%, #8652d680, #0000 62%),
+    radial-gradient(95% 62% at 50% 42%, #4824848c, #0000 72%), linear-gradient(#0a0514 0%, #150a2c 52%, #1e1040 100%);
+  border: 1px solid rgba(134, 59, 255, 0.3);
+  border-radius: 22px;
+  box-shadow: 0 24px 60px rgba(3, 2, 12, 0.6);
+  padding: 22px 22px 24px;
 }
 
-.reading-name {
-  font-size: 15px;
-  font-weight: 700;
-  color: #fff;
-}
-
-.orientation {
-  font-size: 11px;
-  padding: 2px 10px;
-  border-radius: 999px;
-  margin-left: auto;
-}
-
-.orientation.up {
-  color: #5fd98a;
-  background: rgba(46, 158, 87, 0.16);
-}
-
-.orientation.down {
-  color: #ff8a8a;
-  background: rgba(224, 82, 82, 0.16);
-}
-
-.reading-kw {
-  font-size: 12px;
-  color: #b98cff;
-  margin-bottom: 4px;
-}
-
-.reading-text {
-  color: rgba(235, 230, 255, 0.85);
+.detail-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(226, 218, 255, 0.85);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 13px;
-  line-height: 1.7;
-  white-space: pre-line;
+}
+
+.detail-close:hover {
+  background: rgba(134, 59, 255, 0.25);
+}
+
+.dm-head {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.dm-img {
+  width: 84px;
+  aspect-ratio: 2 / 3;
+  border-radius: 8px;
+  object-fit: cover;
+  border: 1px solid rgba(232, 198, 106, 0.35);
+  flex: none;
+}
+
+.dm-img.rotated {
+  transform: rotate(180deg);
+}
+
+.dm-meta h2 {
+  color: #f1ecff;
+  font-size: 22px;
+  letter-spacing: 1px;
+}
+
+.dm-en {
+  color: #a08fc6;
+  font-size: 13px;
+  margin: 6px 0 10px;
+}
+
+.dm-dir {
+  display: inline-block;
+  border-radius: 8px;
+  padding: 2px 10px;
+  font-size: 12px;
+}
+
+.dm-dir.up {
+  color: #e8c66a;
+  background: #e8c66a29;
+  border: 0.5px solid #e8c66a66;
+}
+
+.dm-dir.down {
+  color: #c9a6ff;
+  background: #a970ff2e;
+  border: 0.5px solid #a970ff73;
+}
+
+.dm-kw {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.dm-kw-tag {
+  font-size: 12px;
+  color: #f4e6b8;
+  background: rgba(232, 198, 106, 0.12);
+  border: 0.5px solid rgba(232, 198, 106, 0.3);
+  border-radius: 999px;
+  padding: 4px 12px;
+}
+
+.dm-block h3 {
+  color: #f1ecff;
+  font-size: 16px;
+  margin-bottom: 10px;
+}
+
+.dm-reading {
+  color: #d8cfea;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.dm-ai {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(134, 59, 255, 0.22);
+}
+
+.dm-ai .dm-reading {
+  color: #e6dcff;
+}
+
+/* ---- 综合解答卡（结合全部卡牌的全局结论） ---- */
+.verdict-wrap {
+  margin: 2px 20px 0;
+  min-height: 24px;
+}
+
+.verdict-gather {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: rgba(226, 218, 255, 0.6);
+  font-size: 13px;
+  letter-spacing: 1px;
+  padding: 14px 0;
+}
+
+.verdict-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #e8c66a;
+  box-shadow: 0 0 10px rgba(232, 198, 106, 0.8);
+  animation: verdictPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes verdictPulse {
+  0%, 100% { opacity: 0.4; transform: scale(0.8); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+
+.verdict {
+  position: relative;
+  padding: 18px 18px 16px;
+  border-radius: 18px;
+  text-align: center;
+  background: linear-gradient(160deg, rgba(134, 59, 255, 0.18), rgba(18, 9, 38, 0.45));
+  border: 1px solid rgba(232, 198, 106, 0.3);
+  box-shadow: 0 12px 30px rgba(5, 3, 16, 0.35), inset 0 0 26px rgba(232, 198, 106, 0.07);
+  animation: verdictIn 0.85s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+}
+
+@keyframes verdictIn {
+  from { opacity: 0; transform: translateY(18px); filter: blur(5px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.verdict-ornament {
+  color: #e8c66a;
+  font-size: 14px;
+  letter-spacing: 8px;
+  text-indent: 8px;
+}
+
+.verdict-title {
+  color: #f4e6b8;
+  font-size: 15px;
+  letter-spacing: 4px;
+  text-indent: 4px;
+  margin: 8px 0 10px;
+}
+
+.verdict-q {
+  color: #a08fc6;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+
+.verdict-text {
+  color: #e6dcff;
+  font-size: 14px;
+  line-height: 1.85;
+}
+
+/* ---- 等待解读加载层（仪式感） ---- */
+.loading-mask {
+  position: absolute;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: rgba(8, 4, 20, 0.55);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.loading-orbit {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbit-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.ring-outer {
+  inset: 0;
+  border: 1px solid rgba(232, 198, 106, 0.3);
+  border-top-color: #e8c66a;
+  animation: orbitSpin 1.6s linear infinite;
+}
+
+.ring-inner {
+  inset: 16px;
+  border: 1px dashed rgba(169, 112, 255, 0.35);
+  border-bottom-color: #a970ff;
+  animation: orbitSpinRev 2.2s linear infinite;
+}
+
+.orbit-star {
+  color: #f2dc9a;
+  font-size: 22px;
+  text-shadow: 0 0 12px rgba(242, 220, 155, 0.8);
+  animation: starPulse 1.6s ease-in-out infinite;
+}
+
+.orbit-plate {
+  position: absolute;
+  inset: 0;
+  animation: orbitSpin 3s linear infinite;
+}
+
+.orbit-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  background: #e8c66a;
+  box-shadow: 0 0 8px rgba(232, 198, 106, 0.9);
+}
+
+.orbit-dot.d1 { transform: rotate(0deg) translate(46px) rotate(0deg); }
+.orbit-dot.d2 { transform: rotate(120deg) translate(46px) rotate(-120deg); }
+.orbit-dot.d3 { transform: rotate(240deg) translate(46px) rotate(-240deg); }
+
+.loading-text {
+  color: #f4e6b8;
+  font-size: 15px;
+  letter-spacing: 3px;
+  text-indent: 3px;
+}
+
+.loading-sub {
+  color: rgba(226, 218, 255, 0.55);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+@keyframes orbitSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes orbitSpinRev {
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes starPulse {
+  0%, 100% { opacity: 0.65; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.1); }
 }
 
 /* ---- 底部 Tab ---- */

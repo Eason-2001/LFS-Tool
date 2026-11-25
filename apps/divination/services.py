@@ -1,5 +1,6 @@
 # 第三方命理 / 星座接口封装
 # 所有 appKey 只留在后端环境变量，前端不直接接触第三方服务
+import json
 import random
 
 import requests
@@ -208,3 +209,121 @@ def draw_tarot(spread):
             }
         )
     return cards
+
+
+def get_tarot_card(card_id, upright):
+    """按牌 id 查单张牌详情（只读，不落库）；找不到返回 None"""
+    card = next((c for c in tarot_data.TAROT_DECK if c["id"] == card_id), None)
+    if not card:
+        return None
+    return {
+        "id": card["id"],
+        "name": card["name"],
+        "name_en": card["name_en"],
+        "suit": card.get("suit", "major"),
+        "upright": upright,
+        "keywords": card["keywords_up"] if upright else card["keywords_down"],
+        "reading": card["up"] if upright else card["down"],
+    }
+
+
+# ---------- 大模型个性化解读（DeepSeek，OpenAI 兼容；未配置则回退本地牌意） ----------
+
+LLM_TIMEOUT = 20
+
+SUIT_LABEL = {
+    "major": "大阿卡纳",
+    "wands": "权杖",
+    "cups": "圣杯",
+    "swords": "宝剑",
+    "pents": "星币",
+}
+
+
+def analyze_tarot(cards, question, spread_label=""):
+    """结合用户提问与抽到的牌，调用大模型生成个性化解读。
+
+    返回 {"cards": [每牌分析...], "summary": "整体建议"}；逐牌分析可能为 None（回退静态牌意）。
+    未配置 Key / 调用异常 / 解析失败时返回 None，由调用方走本地静态兜底。
+    """
+    if not getattr(settings, "LLM_API_KEY", ""):
+        return None
+
+    question = (question or "").strip() or "未填写具体问题"
+    suit_rows = []
+    for i, c in enumerate(cards, 1):
+        suit_cn = SUIT_LABEL.get(c["suit"], c["suit"])
+        dir_cn = "正位" if c["upright"] else "逆位"
+        suit_rows.append(
+            f"{i}. 位置「{c['position']}」：{c['name']}（{c['name_en']}，{suit_cn}，{dir_cn}）"
+            f" 关键词：{c['keywords']}\n   参考牌意：{c['reading']}"
+        )
+    cards_block = "\n".join(suit_rows)
+
+    system_prompt = (
+        "你是一位经验丰富、善于结合实际情境的塔罗牌咨询师。请紧扣用户提出的问题和抽到的牌，"
+        "给出具体、落到实处的解读。要求：\n"
+        "1. 围绕问题展开，把牌义对应到用户当前处境的具体方面（如感情、工作、财务、心态等），不要泛泛而谈；\n"
+        "2. 每张牌要点明它在该位置上反映出的具体状态、信号或倾向，再给出一条可参考的行动方向；\n"
+        "3. 避免空泛套话（如“保持平常心”“顺其自然”“一切都会好起来”），不做宿命式断言，不替用户做重大决定；\n"
+        "4. 语言通俗、少堆术语，但分析要有细节、有针对性。"
+    )
+    user_prompt = (
+        f"牌阵：{spread_label or '未指定'}\n"
+        f"用户提问：{question}\n\n"
+        f"抽到的牌（按位置顺序）：\n{cards_block}\n\n"
+        "请只输出一个 JSON 对象，不要多余解释，格式为：\n"
+        '{"cards": ['
+        '"第1张牌分析：结合它在「位置」上的含义，说明反映出的具体现状/信号、对应到问题的哪个方面，'
+        '并给一条可参考的小建议；2-4 句话，避免空话", '
+        '"第2张牌……", ...], '
+        '"summary": "结合全部牌直接回应用户问题：给出明确的整体倾向和行动方向，2-3 句话，不要空泛安慰"}\n'
+        "cards 数组长度必须与牌数一致。"
+    )
+
+    payload = {
+        "model": settings.LLM_MODEL,
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ],
+        "temperature": 0.7,
+        "stream": False,
+    }
+    headers = {
+        "Authorization": f"Bearer {settings.LLM_API_KEY}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        resp = requests.post(
+            f"{settings.LLM_API_BASE.rstrip('/')}/chat/completions",
+            json=payload,
+            headers=headers,
+            timeout=LLM_TIMEOUT,
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        content = data["choices"][0]["message"]["content"]
+    except (requests.RequestException, KeyError, IndexError, ValueError, TypeError):
+        return None
+
+    # 模型偶尔会把 JSON 包在 ```json 围栏里，先剥掉
+    content = (content or "").strip()
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.lower().startswith("json"):
+            content = content[4:]
+        content = content.strip()
+
+    try:
+        parsed = json.loads(content)
+    except ValueError:
+        # JSON 解析失败：整段文本作为整体建议，逐牌回退静态牌意
+        return {"cards": [None] * len(cards), "summary": content}
+
+    ai_cards = parsed.get("cards") or []
+    summary = (parsed.get("summary") or "").strip()
+    # 长度与牌数对齐：不足补 None，超出截断
+    ai_cards = (list(ai_cards) + [None] * len(cards))[: len(cards)]
+    return {"cards": ai_cards, "summary": summary}

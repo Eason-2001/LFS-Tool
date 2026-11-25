@@ -17,6 +17,26 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# 本地开发：从根目录 .env 读取环境变量（容器内由 docker-compose 注入，此处仅兜底）。
+# 已存在的系统环境变量优先，不覆盖；不引入 python-dotenv 依赖。
+def _load_local_env():
+    env_file = BASE_DIR / ".env"
+    if not env_file.exists():
+        return
+    for line in env_file.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, _, val = line.partition("=")
+        key = key.strip()
+        val = val.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = val
+
+
+_load_local_env()
+
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
@@ -157,6 +177,11 @@ SENIVERSE_KEY = os.environ.get("SENIVERSE_KEY", "")
 
 # 第三方服务：万维易源 ShowAPI AppKey（命理：紫微排盘 / 生肖运势 / 黄历）
 SHOWAPI_KEY = os.environ.get("SHOWAPI_KEY", "")
+
+# 大模型（DeepSeek，OpenAI 兼容协议）：未配置 Key 时塔罗解读回退本地静态牌意
+LLM_API_BASE = os.environ.get("LLM_API_BASE", "https://api.deepseek.com/v1")
+LLM_API_KEY = os.environ.get("LLM_API_KEY", "")
+LLM_MODEL = os.environ.get("LLM_MODEL", "deepseek-chat")
 
 # 跨域：前后端经 Nginx 同域反代后本不依赖 CORS，这里保留全开以便本地直连调试
 CORS_ALLOW_ALL_ORIGINS = True

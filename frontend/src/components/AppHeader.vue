@@ -98,13 +98,16 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 
 <style scoped>
 .app-header {
-  position: sticky;
+  position: fixed;
   top: 0;
-  z-index: 100;
+  left: 0;
+  right: 0;
+  z-index: 1000;
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  background: rgba(28, 33, 62, 0.35);
+  background: rgba(20, 24, 45, 0.86);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 4px 18px rgba(8, 10, 24, 0.35);
 }
 
 .header-inner {

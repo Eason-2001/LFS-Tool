@@ -132,10 +132,19 @@ class TarotView(APIView):
             return _bad_request("牌阵须为 daily / three / love")
 
         question = str(request.data.get("question", "")).strip()[:100]
+        if not question:
+            return _bad_request("请先写下你想问的问题")
         cfg = services.TAROT_SPREADS[spread]
         cards = services.draw_tarot(spread)
 
-        result = {"spread": spread, "cards": cards}
+        # 大模型结合提问做个性化解读；未配置 Key / 调用失败时返回 None，逐牌回退静态牌意
+        ai = services.analyze_tarot(cards, question, cfg["label"])
+        ai_cards = ai["cards"] if ai else []
+        for idx, card in enumerate(cards):
+            card["ai_reading"] = ai_cards[idx] if idx < len(ai_cards) else None
+        ai_summary = ai["summary"] if ai else ""
+
+        result = {"spread": spread, "cards": cards, "summary": ai_summary}
         summary = f"{cfg['label']} · {cards[0]['name']}"
 
         DivinationRecord.objects.create(
@@ -147,6 +156,27 @@ class TarotView(APIView):
         )
 
         return Response({"code": 200, "message": "success", "data": result})
+
+
+class TarotCardView(APIView):
+    """GET /api/divination/tarot/card/?id=&direction=  单张塔罗牌详情（只读，不落库）"""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            card_id = _gate_int(request.GET.get("id"), 0, 77, "牌 id")
+        except ValueError as exc:
+            return _bad_request(str(exc))
+
+        direction = str(request.GET.get("direction", "upright")).lower()
+        upright = direction != "reversed"
+
+        card = services.get_tarot_card(card_id, upright)
+        if not card:
+            return _bad_request("未找到该塔罗牌")
+
+        return Response({"code": 200, "message": "success", "data": card})
 
 
 class HistoryView(APIView):
