@@ -117,6 +117,9 @@
 
     <!-- 胜利礼花层 -->
     <canvas v-if="celebrating" ref="fxCanvas" class="fx-layer"></canvas>
+
+    <!-- 规则轻提示 -->
+    <div v-if="hint" class="toast">{{ hint }}</div>
   </div>
 </template>
 
@@ -199,6 +202,7 @@ const fly = ref(false) // 补牌飞行动画播放中
 const homeAnim = ref(false) // 收牌飞入槽位动画播放中
 const celebrating = ref(false) // 胜利礼花播放中
 const fxCanvas = ref(null)
+const hint = ref('') // 顶部规则提示
 
 const leaderboard = ref([])
 const me = ref(null)
@@ -213,6 +217,7 @@ let cardId = 0
 let fxRaf = null
 let fxLaunchTimer = null
 let fxStopTimer = null
+let hintTimer = null
 let fxRockets = []
 let fxParticles = []
 const FX_COLORS = ['#f5d76e', '#e8c987', '#ff9a5a', '#ff7eb6', '#7ee8c9', '#b79bff', '#ff6b6b']
@@ -413,6 +418,8 @@ function sendHome(col, group) {
       setTimeout(() => {
         const pile = columns.value[col]
         pile.splice(pile.length - 13, 13)
+        // 成组收走后，翻开新露出的那张压住的背面牌
+        if (pile.length && !pile[pile.length - 1].faceUp) pile[pile.length - 1].faceUp = true
         completed.value.push(group)
         foundation.value++
         homeAnim.value = false
@@ -508,9 +515,12 @@ function onColClick(col) {
 // ---------- 发牌堆 ----------
 function dealStock() {
   if (status.value === 'win' || dealing.value || fly.value || homeAnim.value) return
-  if (stock.value.length < 10) return
+  if (stock.value.length < 10) { showHint('牌堆已经发完了'); return }
   // 标准规则：只要还有空列，就不能从牌堆补牌
-  if (columns.value.some((p) => p.length === 0)) return
+  if (columns.value.some((p) => p.length === 0)) {
+    showHint('还有空列，先把空位填满才能发新一轮牌')
+    return
+  }
   ensurePlaying()
   // 先记录被抽走前牌堆顶层的位置，作为本次补牌的飞牌起点
   const origin = pileOriginRect()
@@ -664,12 +674,20 @@ function stopCelebration() {
   celebrating.value = false
 }
 
+// 顶部轻提示，若干秒后自动消失
+function showHint(msg) {
+  hint.value = msg
+  if (hintTimer) clearTimeout(hintTimer)
+  hintTimer = setTimeout(() => { hint.value = ''; hintTimer = null }, 2200)
+}
+
 newGame()
 onMounted(fetchLeaderboard)
 onBeforeUnmount(() => {
   stopTimer()
   stopCelebration()
   if (dealTimer) clearTimeout(dealTimer)
+  if (hintTimer) clearTimeout(hintTimer)
   window.removeEventListener('pointermove', onDragMove)
 })
 </script>
@@ -950,6 +968,32 @@ onBeforeUnmount(() => {
   height: 100vh;
   z-index: 200;
   pointer-events: none;
+}
+
+/* 顶部规则轻提示 */
+.toast {
+  position: fixed;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 180;
+  max-width: 80vw;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: rgba(20, 22, 28, 0.92);
+  border: 1px solid rgba(201, 168, 106, 0.45);
+  color: #e8c987;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5);
+  animation: toastIn 0.25s ease both;
+  pointer-events: none;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
 }
 
 .drag-card {
