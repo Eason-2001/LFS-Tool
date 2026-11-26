@@ -11,6 +11,7 @@ from .serializers import LeaderboardSerializer
 GAMES = {
     "breakout": "higher",
     "tetris": "higher",
+    "spider": "lower",
     "minesweeper-easy": "lower",
     "minesweeper-medium": "lower",
     "minesweeper-hard": "lower",

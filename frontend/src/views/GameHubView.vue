@@ -38,6 +38,12 @@ const games = [
     icon: '🧩',
     name: '俄罗斯方块',
     desc: '堆叠消行 · 等级加速 · 冲击高分'
+  },
+  {
+    path: '/game/spider',
+    icon: '🕷️',
+    name: '蜘蛛纸牌',
+    desc: '接龙成组 · 八组通关 · 计时挑战'
   }
 ]
 </script>
